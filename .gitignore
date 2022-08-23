@@ -1,0 +1,5 @@
+venv
+test.py
+profiles/*
+__pycache__
+.idea
