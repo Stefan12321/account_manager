@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'create_account_dialog.ui'
+# Form implementation generated from reading ui file '.\UI\create_account_dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.7
 #
@@ -15,23 +15,54 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(383, 134)
+        Dialog.setStyleSheet("QPushButton{\n"
+"height: 36px;\n"
+"border: 1px solid;\n"
+"border-radius: 4px;\n"
+"border-color:  rgba(0, 0, 0, 0.12);\n"
+"color: #6200ee;\n"
+"font: \"Roboto\";\n"
+"font-size: 20px;\n"
+"padding: 5px\n"
+"}\n"
+"QPushButton::hover{\n"
+"    background-color: rgb(230, 230, 230);\n"
+"}\n"
+"QPushButton::pressed{\n"
+"    background-color: rgb(179, 179, 179);\n"
+"}\n"
+"\n"
+"QListWidget{\n"
+"border: none;\n"
+"}\n"
+"QLineEdit{\n"
+"border: none;\n"
+"}")
+        Dialog.setLocale(QtCore.QLocale(QtCore.QLocale.English, QtCore.QLocale.UnitedStates))
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(Dialog)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.label = QtWidgets.QLabel(Dialog)
+        self.label.setObjectName("label")
+        self.verticalLayout.addWidget(self.label)
+        self.lineEdit = QtWidgets.QLineEdit(Dialog)
+        self.lineEdit.setObjectName("lineEdit")
+        self.verticalLayout.addWidget(self.lineEdit)
+        self.horizontalLayout.addLayout(self.verticalLayout)
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem1)
+        self.verticalLayout_2.addLayout(self.horizontalLayout)
         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
-        self.buttonBox.setGeometry(QtCore.QRect(20, 90, 341, 32))
+        self.buttonBox.setLocale(QtCore.QLocale(QtCore.QLocale.English, QtCore.QLocale.UnitedStates))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
-        self.verticalLayoutWidget = QtWidgets.QWidget(Dialog)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 160, 51))
-        self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.label = QtWidgets.QLabel(self.verticalLayoutWidget)
-        self.label.setObjectName("label")
-        self.verticalLayout.addWidget(self.label)
-        self.lineEdit = QtWidgets.QLineEdit(self.verticalLayoutWidget)
-        self.lineEdit.setObjectName("lineEdit")
-        self.verticalLayout.addWidget(self.lineEdit)
+        self.verticalLayout_2.addWidget(self.buttonBox)
 
         self.retranslateUi(Dialog)
         self.buttonBox.accepted.connect(Dialog.accept) # type: ignore
@@ -40,5 +71,5 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Create new account"))
         self.label.setText(_translate("Dialog", "Account name"))

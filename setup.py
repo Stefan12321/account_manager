@@ -16,7 +16,7 @@ executables = [Executable("main.py",
 # includes = ['chromedriver.exe']
 includes = ['chromedriver.exe','profiles', 'extension']
 
-packages = ["os", "threading",  "time", "PyQt5", "selenium"]
+packages = ["os", "threading",  "time", "PyQt5", "selenium", "json", "user_agents"]
 options = {
     'build_exe': {
         'packages': packages,
