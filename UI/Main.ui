@@ -14,7 +14,25 @@
    <string>Accounts manager</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QDialogButtonBox,QPushButton{
+   <string notr="true">#pushButtonDeleteAccounts{
+height: 16px;
+border: 1px solid;
+border-radius: 4px;
+border-color:  rgba(0, 0, 0, 0.12);
+color: #ffffff;
+font: &quot;Roboto&quot;;
+font-size: 20px;
+padding: 5px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0.414773 rgba(195, 20, 50, 255), stop:1 rgba(36, 11, 54, 255));
+}
+
+#pushButtonDeleteAccounts::hover{
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0.0852273 rgba(195, 20, 50, 255), stop:1 rgba(36, 11, 54, 255));
+}
+#pushButtonDeleteAccounts::pressed{
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(157, 16, 40, 255), stop:0.590909 rgba(38, 12, 56, 255));
+}
+QDialogButtonBox,QPushButton{
 height: 36px;
 border: 1px solid;
 border-radius: 4px;
@@ -34,6 +52,17 @@ QPushButton::pressed{
 QListWidget{
 border: none;
 
+}
+#CreateAccountButton{
+	color: rgb(255, 255, 255);
+	background-color: qlineargradient(spread:pad, x1:0.0113636, y1:0.409, x2:1, y2:0.477, stop:0 rgba(0, 210, 255, 255), stop:1 rgba(58, 123, 213, 255))
+}
+#CreateAccountButton::hover{
+	background-color: qlineargradient(spread:pad, x1:0.0113636, y1:0.409, x2:1, y2:0.477, stop:0 rgba(0, 210, 255, 255), stop:0.619318 rgba(58, 123, 213, 255))
+}
+#CreateAccountButton::pressed{
+	
+	background-color: qlineargradient(spread:pad, x1:0.0113636, y1:0.409, x2:1, y2:0.477, stop:0 rgba(0, 175, 213, 255), stop:0.619318 rgba(39, 83, 144, 255))
 }</string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -73,7 +102,74 @@ border: none;
      </layout>
     </item>
     <item>
-     <widget class="QListWidget" name="listWidget"/>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBoxCkeckAll">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonDeleteAccounts">
+          <property name="text">
+           <string>Delete</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QListWidget" name="listWidget"/>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

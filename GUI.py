@@ -15,7 +15,25 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(580, 528)
-        MainWindow.setStyleSheet("QDialogButtonBox,QPushButton{\n"
+        MainWindow.setStyleSheet("#pushButtonDeleteAccounts{\n"
+"height: 16px;\n"
+"border: 1px solid;\n"
+"border-radius: 4px;\n"
+"border-color:  rgba(0, 0, 0, 0.12);\n"
+"color: #ffffff;\n"
+"font: \"Roboto\";\n"
+"font-size: 20px;\n"
+"padding: 5px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0.414773 rgba(195, 20, 50, 255), stop:1 rgba(36, 11, 54, 255));\n"
+"}\n"
+"\n"
+"#pushButtonDeleteAccounts::hover{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0.0852273 rgba(195, 20, 50, 255), stop:1 rgba(36, 11, 54, 255));\n"
+"}\n"
+"#pushButtonDeleteAccounts::pressed{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(157, 16, 40, 255), stop:0.590909 rgba(38, 12, 56, 255));\n"
+"}\n"
+"QDialogButtonBox,QPushButton{\n"
 "height: 36px;\n"
 "border: 1px solid;\n"
 "border-radius: 4px;\n"
@@ -35,6 +53,17 @@ class Ui_MainWindow(object):
 "QListWidget{\n"
 "border: none;\n"
 "\n"
+"}\n"
+"#CreateAccountButton{\n"
+"    color: rgb(255, 255, 255);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.0113636, y1:0.409, x2:1, y2:0.477, stop:0 rgba(0, 210, 255, 255), stop:1 rgba(58, 123, 213, 255))\n"
+"}\n"
+"#CreateAccountButton::hover{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.0113636, y1:0.409, x2:1, y2:0.477, stop:0 rgba(0, 210, 255, 255), stop:0.619318 rgba(58, 123, 213, 255))\n"
+"}\n"
+"#CreateAccountButton::pressed{\n"
+"    \n"
+"    background-color: qlineargradient(spread:pad, x1:0.0113636, y1:0.409, x2:1, y2:0.477, stop:0 rgba(0, 175, 213, 255), stop:0.619318 rgba(39, 83, 144, 255))\n"
 "}")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -54,9 +83,28 @@ class Ui_MainWindow(object):
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem)
         self.horizontalLayout.addLayout(self.verticalLayout)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        spacerItem1 = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem1)
+        self.checkBoxCkeckAll = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkBoxCkeckAll.setText("")
+        self.checkBoxCkeckAll.setObjectName("checkBoxCkeckAll")
+        self.horizontalLayout_2.addWidget(self.checkBoxCkeckAll)
+        spacerItem2 = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem2)
+        self.pushButtonDeleteAccounts = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButtonDeleteAccounts.setObjectName("pushButtonDeleteAccounts")
+        self.horizontalLayout_2.addWidget(self.pushButtonDeleteAccounts)
+        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem3)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_2)
         self.listWidget = QtWidgets.QListWidget(self.centralwidget)
         self.listWidget.setObjectName("listWidget")
-        self.horizontalLayout.addWidget(self.listWidget)
+        self.verticalLayout_2.addWidget(self.listWidget)
+        self.horizontalLayout.addLayout(self.verticalLayout_2)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 580, 22))
@@ -77,5 +125,6 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Accounts manager"))
         self.CreateAccountButton.setText(_translate("MainWindow", "Create profile"))
+        self.pushButtonDeleteAccounts.setText(_translate("MainWindow", "Delete"))
         self.actionSave.setText(_translate("MainWindow", "Save"))
         self.actionLoad.setText(_translate("MainWindow", "Load"))

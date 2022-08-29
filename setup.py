@@ -1,5 +1,6 @@
 from cx_Freeze import setup, Executable
 import shutil
+import os
 
 try:
     shutil.rmtree('build')
@@ -14,9 +15,10 @@ executables = [Executable("main.py",
                ]
 
 # includes = ['chromedriver.exe']
-includes = ['chromedriver.exe','profiles', 'extension']
+includes = ['extension']
 
-packages = ["os", "threading",  "time", "PyQt5", "selenium", "json", "user_agents"]
+packages = ["os", "threading", "time", "PyQt5", "selenium", "json", "user_agents", "undetected_chromedriver",
+            "html_editor"]
 options = {
     'build_exe': {
         'packages': packages,
@@ -27,7 +29,8 @@ options = {
 setup(
     name="accounts_manager",
     options=options,
-    version=1.1,
+    version=1.0,
     description='',
     executables=executables
 )
+os.makedirs('./build/exe.win-amd64-3.9/profiles')
