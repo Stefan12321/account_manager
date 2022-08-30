@@ -9,6 +9,7 @@ import selenium
 import json
 import undetected_chromedriver as uc
 import shutil
+import zipfile
 
 from selenium import webdriver
 from GUI import Ui_MainWindow
@@ -22,6 +23,7 @@ from qt_material import apply_stylesheet
 from list_widget import Ui_Form as Ui_Custom_widget
 from create_account_dialog import Ui_Dialog as Ui_create_account_dialog
 from settings_dialog import Ui_Dialog as Ui_settings_dialog
+from password_decryptor.passwords_decryptor import do_decrypt
 
 
 def serialize(path, data: dict):
@@ -92,6 +94,7 @@ class WebBrowser:
             pass
         options.add_argument(f'--user-data-dir={path}')
         options.add_argument(f"--user-agent={user_agent_}")
+        # options.add_argument(f'--password-store=gnome')
         try:
             driver = uc.Chrome(options=options)
         except Exception as e:
@@ -227,12 +230,13 @@ class QCustomQWidget(QtWidgets.QWidget):
         except Exception as e:
             extensions = {}
         checked = 2
-        dlg = SettingsDialog()
+        dlg = SettingsDialog(user_agent=user_agent, account_name=self.name)
+        passwords = do_decrypt(path)
+        dlg.passwords_textBrowser.setText(passwords)
         for item in dlg.items:
             if item.extension_name in extensions:
                 if extensions[item.extension_name] is True:
                     item.setCheckState(QtCore.Qt.Checked)
-        dlg.user_agent_line.setText(user_agent)
         dlg.show()
         result = dlg.exec()
         if result:
@@ -247,18 +251,8 @@ class QCustomQWidget(QtWidgets.QWidget):
                 data.update({"user-agent": dlg.user_agent_line.text()})
             serialize(path, data)
 
-    def delete_profile(self):
-        # TODO create delete func
-        pass
-
     def setTextUp(self, text):
         self.account_name_label.setText(text)
-
-    def setTextDown(self, text):
-        self.running_status_label.setText(text)
-
-    def setIcon(self, imagePath):
-        self.iconQLabel.setPixmap(QtGui.QPixmap(imagePath))
 
 
 class QListAccountsWidgetItem(QtWidgets.QListWidgetItem):
@@ -282,10 +276,12 @@ class CreateAccountDialog(Ui_create_account_dialog, QtWidgets.QDialog):
 
 
 class SettingsDialog(Ui_settings_dialog, QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, user_agent="", account_name=""):
         super(SettingsDialog, self).__init__(parent)
         self.setupUi(self)
         self.items = []
+        self.name = account_name
+        self.user_agent_line.setText(user_agent)
         extension_list = os.listdir(fr"{os.path.dirname(os.path.realpath(__file__))}\extension")
         for extension_name in extension_list:
             text = extension_name
@@ -295,6 +291,7 @@ class SettingsDialog(Ui_settings_dialog, QtWidgets.QDialog):
             item.setCheckState(QtCore.Qt.Unchecked)
             self.items.append(item)
             self.listWidgetExtensions.addItem(item)
+
 
 
 class QListCustomWidget(QtWidgets.QListWidgetItem):
@@ -309,8 +306,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
+        self.base_path = fr"{os.path.dirname(os.path.realpath(__file__))}"
         self.profiles_path = fr"{os.path.dirname(os.path.realpath(__file__))}\profiles"
-        self.browsers_names = os.listdir(fr"{os.path.dirname(os.path.realpath(__file__))}\profiles")
+        self.browsers_names = [item for item in os.listdir(fr"{os.path.dirname(os.path.realpath(__file__))}\profiles")
+                               if os.path.isdir(fr"{os.path.dirname(os.path.realpath(__file__))}\profiles\{item}")]
         self.list_item_arr = []
         for i in self.browsers_names:
             self.create_list_item(i)
@@ -322,6 +321,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listWidget.itemClicked.connect(self.item_click)
         self.CreateAccountButton.clicked.connect(self.create_profile)
         self.pushButtonDeleteAccounts.clicked.connect(self.delete_profiles)
+        self.exportProfileButton.clicked.connect(self.export)
         self.checkBoxCkeckAll.stateChanged.connect(self.set_all_checkbox)
 
     def set_all_checkbox(self, state):
@@ -334,7 +334,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             elif item_state != 0 and state == 0:
                 widget.checkBox.setCheckState(QtCore.Qt.Unchecked)
-
 
     def create_list_item(self, name):
         myQCustomQWidget = QCustomQWidget()
@@ -349,25 +348,52 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listWidget.setItemWidget(myQListWidgetItem, myQCustomQWidget)
         self.list_item_arr.append(myQListWidgetItem)
 
-    def delete_profiles(self):
-        items_to_delete = []
+    def export(self):
+        checked_items = self.get_checked_items()
+        export_path = fr"{self.base_path}\export.zip"
+        if os.path.isfile(export_path):
+            os.remove(export_path)
+        if len(checked_items) > 0:
+            self.zip_directory([fr'{self.profiles_path}\{profile.name}' for profile in checked_items],
+                               export_path)
+        print("EXPORTED")
+
+    @staticmethod
+    def zip_directory(folders_path: list, zip_path: str):
+        with zipfile.ZipFile(zip_path, mode='w') as zipf:
+            for folder_path in folders_path:
+                base_folder = folder_path.split('\\')[-1]
+                print(base_folder)
+                len_dir_path = len(folder_path)
+                for root, _, files in os.walk(folder_path):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        zipf.write(file_path, f'{base_folder}/{file_path[len_dir_path:]}')
+
+    def get_checked_items(self):
+        checked_items = []
         for item in self.list_item_arr:
             widget = self.listWidget.itemWidget(item)
             if widget.checkBox.checkState() == 2:
-                items_to_delete.append(item)
-        if len(items_to_delete) > 0:
+                checked_items.append(item)
+        return checked_items
+
+    def delete_profiles(self):
+        checked_items = self.get_checked_items()
+        if len(checked_items) > 0:
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Warning)
 
-            msg.setText(f"Are y sure you want to delete accounts: {[i.name for i in items_to_delete]}")
+            msg.setText(f"Are y sure you want to delete accounts: {[i.name for i in checked_items]}")
             msg.setWindowTitle("Warning")
             msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
 
             retval = msg.exec()
             if retval == 1024:
-                for profile in items_to_delete:
+                for profile in checked_items:
                     shutil.rmtree(path=fr'{self.profiles_path}\{profile.name}')
                     self.listWidget.removeItemWidget(profile)
+                time.sleep(2)
                 self.list_item_arr = []
                 self.listWidget.clear()
                 for i in self.browsers_names:
@@ -387,14 +413,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 'user-agent': user_agent_
             }
             serialize(path, data)
-        print(result)
-        print(dlg.lineEdit.text())
 
     def item_click(self, item: QListAccountsWidgetItem):
         account_name = self.listWidget.itemWidget(item).name
-        # print(self.listWidget.itemWidget(item).name)
-        # print(f"item {dir(item)} clicked")
-        # return 0
         if item.status is True:
             pass
         else:
@@ -433,7 +454,5 @@ if __name__ == '__main__':
 
     app = QtWidgets.QApplication(sys.argv)
     m = MainWindow()
-    # apply_stylesheet(app, theme='light_blue.xml')
     m.show()
     sys.exit(app.exec_())
-    # d = WebBrowser(fr"{os.path.dirname(os.path.realpath(__file__))}\profiles\2")

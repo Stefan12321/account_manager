@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>478</width>
+    <height>451</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -78,19 +78,33 @@ border: none;
        <item>
         <widget class="QListWidget" name="listWidgetExtensions"/>
        </item>
+       <item>
+        <widget class="QLabel" name="passwords_label">
+         <property name="text">
+          <string>Passwords</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTextBrowser" name="passwords_textBrowser"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QDialogButtonBox" name="buttonBox">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="standardButtons">
+          <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
     </layout>
-   </item>
-   <item>
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
    </item>
   </layout>
  </widget>

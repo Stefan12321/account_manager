@@ -14,11 +14,13 @@ import csv
 # CHROME_PATH_LOCAL_STATE = os.path.normpath(r"%s\AppData\Local\Google\Chrome\User Data\Local State" % (os.environ['USERPROFILE']))
 # CHROME_PATH = os.path.normpath(r"%s\AppData\Local\Google\Chrome\User Data" % (os.environ['USERPROFILE']))
 # GLOBAL CONSTANT
-CHROME_PATH_LOCAL_STATE = r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\v2 - 100\Local State"
-CHROME_PATH = r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\v2 - 100"
+# CHROME_PATH_LOCAL_STATE = r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\v2 - 100\Local State"
+# CHROME_PATH = r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\v2 - 100"
 
 
-def get_secret_key():
+def get_secret_key(path):
+    CHROME_PATH_LOCAL_STATE = fr'{path}\Local State'
+
     try:
         # (1) Get secretkey from chrome local state
         with open(CHROME_PATH_LOCAL_STATE, "r", encoding='utf-8') as f:
@@ -72,14 +74,16 @@ def get_db_connection(chrome_path_login_db):
         return None
 
 
-if __name__ == '__main__':
+def do_decrypt(path):
+    CHROME_PATH = path
+    passwords = ''
     try:
         # Create Dataframe to store passwords
-        with open('decrypted_password.csv', mode='w', newline='', encoding='utf-8') as decrypt_password_file:
+        with open(fr'{path}\decrypted_password.csv', mode='w', newline='', encoding='utf-8') as decrypt_password_file:
             csv_writer = csv.writer(decrypt_password_file, delimiter=',')
             csv_writer.writerow(["index", "url", "username", "password"])
             # (1) Get secret key
-            secret_key = get_secret_key()
+            secret_key = get_secret_key(path)
             # Search user profile or default folder (this is where the encrypted login password is stored)
             folders = [element for element in os.listdir(CHROME_PATH) if
                        re.search("^Profile*|^Default$", element) != None]
@@ -89,7 +93,7 @@ if __name__ == '__main__':
                 conn = get_db_connection(chrome_path_login_db)
                 if (secret_key and conn):
                     cursor = conn.cursor()
-                    cursor.execute("SELECT action_url, username_value, password_value FROM logins")
+                    cursor.execute("SELECT origin_url, username_value, password_value FROM logins")
                     for index, login in enumerate(cursor.fetchall()):
                         url = login[0]
                         username = login[1]
@@ -98,9 +102,10 @@ if __name__ == '__main__':
                             # (3) Filter the initialisation vector & encrypted password from ciphertext
                             # (4) Use AES algorithm to decrypt the password
                             decrypted_password = decrypt_password(ciphertext, secret_key)
-                            print("Sequence: %d" % (index))
-                            print("URL: %s\nUser Name: %s\nPassword: %s\n" % (url, username, decrypted_password))
-                            print("*" * 50)
+                            passwords += f'Sequence: {index}\nURL: {url}\nUser Name: {username}\nPassword: {decrypted_password}\n{"*" * 50}\n'
+                            # print("Sequence: %d" % (index))
+                            # print("URL: %s\nUser Name: %s\nPassword: %s\n" % (url, username, decrypted_password))
+                            # print("*" * 50)
                             # (5) Save into CSV
                             csv_writer.writerow([index, url, username, decrypted_password])
                     # Close database connection
@@ -108,5 +113,9 @@ if __name__ == '__main__':
                     conn.close()
                     # Delete temp login db
                     os.remove("Loginvault.db")
+                    return passwords
     except Exception as e:
         print("[ERR] " % str(e))
+if __name__ == '__main__':
+    print(do_decrypt(r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\test"))
+    # print(do_decrypt(r"C:\Users\Stefan\AppData\Local\Google\Chrome\User Data"))

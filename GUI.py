@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'UI/Main.ui'
+# Form implementation generated from reading ui file '.\UI\Main.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.7
 #
@@ -15,8 +15,8 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(580, 528)
-        MainWindow.setStyleSheet("#pushButtonDeleteAccounts{\n"
-"height: 16px;\n"
+        MainWindow.setStyleSheet("#pushButtonDeleteAccounts, #exportProfileButton{\n"
+"height: 24px;\n"
 "border: 1px solid;\n"
 "border-radius: 4px;\n"
 "border-color:  rgba(0, 0, 0, 0.12);\n"
@@ -54,16 +54,26 @@ class Ui_MainWindow(object):
 "border: none;\n"
 "\n"
 "}\n"
-"#CreateAccountButton{\n"
+"#CreateAccountButton, #importProfileButton{\n"
 "    color: rgb(255, 255, 255);\n"
 "    background-color: qlineargradient(spread:pad, x1:0.0113636, y1:0.409, x2:1, y2:0.477, stop:0 rgba(0, 210, 255, 255), stop:1 rgba(58, 123, 213, 255))\n"
 "}\n"
-"#CreateAccountButton::hover{\n"
+"#CreateAccountButton::hover, #importProfileButton::hover{\n"
 "    background-color: qlineargradient(spread:pad, x1:0.0113636, y1:0.409, x2:1, y2:0.477, stop:0 rgba(0, 210, 255, 255), stop:0.619318 rgba(58, 123, 213, 255))\n"
 "}\n"
-"#CreateAccountButton::pressed{\n"
+"#CreateAccountButton::pressed, #importProfileButton::pressed{\n"
 "    \n"
 "    background-color: qlineargradient(spread:pad, x1:0.0113636, y1:0.409, x2:1, y2:0.477, stop:0 rgba(0, 175, 213, 255), stop:0.619318 rgba(39, 83, 144, 255))\n"
+"}\n"
+"#exportProfileButton{\n"
+"color: rgb(255, 255, 255);\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0.472, x2:1, y2:0.682, stop:0 rgba(17, 153, 142, 255), stop:1 rgba(56, 239, 125, 255));\n"
+"}\n"
+"#exportProfileButton::hover{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0.472, x2:1, y2:0.682, stop:0.261364 rgba(17, 153, 142, 255), stop:0.875 rgba(56, 239, 125, 255));\n"
+"}\n"
+"#exportProfileButton::pressed{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0.472, x2:1, y2:0.682, stop:0.352273 rgba(13, 120, 112, 255), stop:1 rgba(42, 179, 93, 255));\n"
 "}")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -71,6 +81,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.verticalLayout.addItem(spacerItem)
         self.CreateAccountButton = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setPointSize(-1)
@@ -80,26 +92,32 @@ class Ui_MainWindow(object):
         self.CreateAccountButton.setStyleSheet("")
         self.CreateAccountButton.setObjectName("CreateAccountButton")
         self.verticalLayout.addWidget(self.CreateAccountButton)
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem)
+        self.importProfileButton = QtWidgets.QPushButton(self.centralwidget)
+        self.importProfileButton.setObjectName("importProfileButton")
+        self.verticalLayout.addWidget(self.importProfileButton)
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem1)
         self.horizontalLayout.addLayout(self.verticalLayout)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        spacerItem1 = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_2.addItem(spacerItem1)
+        spacerItem2 = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem2)
         self.checkBoxCkeckAll = QtWidgets.QCheckBox(self.centralwidget)
         self.checkBoxCkeckAll.setText("")
         self.checkBoxCkeckAll.setObjectName("checkBoxCkeckAll")
         self.horizontalLayout_2.addWidget(self.checkBoxCkeckAll)
-        spacerItem2 = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_2.addItem(spacerItem2)
+        spacerItem3 = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem3)
         self.pushButtonDeleteAccounts = QtWidgets.QPushButton(self.centralwidget)
         self.pushButtonDeleteAccounts.setObjectName("pushButtonDeleteAccounts")
         self.horizontalLayout_2.addWidget(self.pushButtonDeleteAccounts)
-        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_2.addItem(spacerItem3)
+        self.exportProfileButton = QtWidgets.QPushButton(self.centralwidget)
+        self.exportProfileButton.setObjectName("exportProfileButton")
+        self.horizontalLayout_2.addWidget(self.exportProfileButton)
+        spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem4)
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
         self.listWidget = QtWidgets.QListWidget(self.centralwidget)
         self.listWidget.setObjectName("listWidget")
@@ -125,6 +143,8 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Accounts manager"))
         self.CreateAccountButton.setText(_translate("MainWindow", "Create profile"))
+        self.importProfileButton.setText(_translate("MainWindow", "Import profile"))
         self.pushButtonDeleteAccounts.setText(_translate("MainWindow", "Delete"))
+        self.exportProfileButton.setText(_translate("MainWindow", "Export profiles"))
         self.actionSave.setText(_translate("MainWindow", "Save"))
         self.actionLoad.setText(_translate("MainWindow", "Load"))

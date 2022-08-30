@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(400, 300)
+        Dialog.resize(478, 451)
         Dialog.setStyleSheet("QPushButton{\n"
 "height: 36px;\n"
 "border: 1px solid;\n"
@@ -57,9 +57,6 @@ class Ui_Dialog(object):
         self.user_agent_label.setSizePolicy(sizePolicy)
         self.user_agent_label.setObjectName("user_agent_label")
         self.horizontalLayout.addWidget(self.user_agent_label)
-        self.checkBoxUserAgent = QtWidgets.QCheckBox(Dialog)
-        self.checkBoxUserAgent.setObjectName("checkBoxUserAgent")
-        self.horizontalLayout.addWidget(self.checkBoxUserAgent)
         self.verticalLayout_2.addLayout(self.horizontalLayout)
         self.user_agent_line = QtWidgets.QLineEdit(Dialog)
         self.user_agent_line.setObjectName("user_agent_line")
@@ -71,13 +68,22 @@ class Ui_Dialog(object):
         self.listWidgetExtensions = QtWidgets.QListWidget(Dialog)
         self.listWidgetExtensions.setObjectName("listWidgetExtensions")
         self.verticalLayout_4.addWidget(self.listWidgetExtensions)
+        self.passwords_label = QtWidgets.QLabel(Dialog)
+        self.passwords_label.setObjectName("passwords_label")
+        self.verticalLayout_4.addWidget(self.passwords_label)
+        self.passwords_textBrowser = QtWidgets.QTextBrowser(Dialog)
+        self.passwords_textBrowser.setObjectName("passwords_textBrowser")
+        self.verticalLayout_4.addWidget(self.passwords_textBrowser)
         self.verticalLayout_3.addLayout(self.verticalLayout_4)
-        self.verticalLayout.addLayout(self.verticalLayout_3)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
-        self.verticalLayout.addWidget(self.buttonBox)
+        self.horizontalLayout_2.addWidget(self.buttonBox)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_2)
+        self.verticalLayout.addLayout(self.verticalLayout_3)
 
         self.retranslateUi(Dialog)
         self.buttonBox.accepted.connect(Dialog.accept) # type: ignore
@@ -88,5 +94,5 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Settings"))
         self.user_agent_label.setText(_translate("Dialog", "User agent"))
-        self.checkBoxUserAgent.setText(_translate("Dialog", "Change user agent"))
         self.extensions_label.setText(_translate("Dialog", "Extensions"))
+        self.passwords_label.setText(_translate("Dialog", "Passwords"))
