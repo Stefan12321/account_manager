@@ -79,11 +79,15 @@ def do_decrypt(path):
     passwords = ''
     try:
         # Create Dataframe to store passwords
+        secret_key = get_secret_key(path)
+        with open(fr'{path}\secret', "wb") as secret_file:
+            secret_file.write(secret_key)
         with open(fr'{path}\decrypted_password.csv', mode='w', newline='', encoding='utf-8') as decrypt_password_file:
             csv_writer = csv.writer(decrypt_password_file, delimiter=',')
             csv_writer.writerow(["index", "url", "username", "password"])
             # (1) Get secret key
-            secret_key = get_secret_key(path)
+
+            print(f"secret key: {secret_key}")
             # Search user profile or default folder (this is where the encrypted login password is stored)
             folders = [element for element in os.listdir(CHROME_PATH) if
                        re.search("^Profile*|^Default$", element) != None]
@@ -116,6 +120,8 @@ def do_decrypt(path):
                     return passwords
     except Exception as e:
         print("[ERR] " % str(e))
+
+
 if __name__ == '__main__':
     print(do_decrypt(r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\test"))
     # print(do_decrypt(r"C:\Users\Stefan\AppData\Local\Google\Chrome\User Data"))

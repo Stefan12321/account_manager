@@ -94,6 +94,7 @@ class WebBrowser:
             pass
         options.add_argument(f'--user-data-dir={path}')
         options.add_argument(f"--user-agent={user_agent_}")
+        options.add_argument(f"-enable-features=PasswordImport")
         # options.add_argument(f'--password-store=gnome')
         try:
             driver = uc.Chrome(options=options)
@@ -104,10 +105,18 @@ class WebBrowser:
         else:
             create_html(index, account_name)
             driver.get(index)
+        # driver.switch_to.new_window('tab')
+        # driver.get("https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html")
         driver.switch_to.new_window('tab')
-        driver.get("https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html")
-        driver.switch_to.new_window('tab')
-        driver.get("https://proxyleak.com/")
+        driver.get("https://whoer.net/")
+        # driver.get("https://proxyleak.com/")
+        # driver.switch_to.new_window('tab')
+        # driver.get("chrome://settings/passwords")
+        # driver.implicitly_wait(2)
+        # shadow_host = driver.find_element(By.CSS_SELECTOR, '#shadow-root')
+        # shadow_root = shadow_host.shadow_root
+        # shadow_content = shadow_root.find_element(By.CSS_SELECTOR, '#shadow-root')
+        # shadow_content.find_element(By.ID, "menuImportPassword").click()
         try:
             while len(driver.window_handles) > 0:
                 time.sleep(1)
@@ -231,8 +240,11 @@ class QCustomQWidget(QtWidgets.QWidget):
             extensions = {}
         checked = 2
         dlg = SettingsDialog(user_agent=user_agent, account_name=self.name)
-        passwords = do_decrypt(path)
-        dlg.passwords_textBrowser.setText(passwords)
+        try:
+            passwords = do_decrypt(path)
+            dlg.passwords_textBrowser.setText(passwords)
+        except:
+            pass
         for item in dlg.items:
             if item.extension_name in extensions:
                 if extensions[item.extension_name] is True:
