@@ -5,10 +5,13 @@ import sys
 import json
 import base64
 import sqlite3
+
+import pywintypes
 import win32crypt
 from Cryptodome.Cipher import AES
 import shutil
 import csv
+
 
 # GLOBAL CONSTANT
 # CHROME_PATH_LOCAL_STATE = os.path.normpath(r"%s\AppData\Local\Google\Chrome\User Data\Local State" % (os.environ['USERPROFILE']))
@@ -16,6 +19,30 @@ import csv
 # GLOBAL CONSTANT
 # CHROME_PATH_LOCAL_STATE = r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\v2 - 100\Local State"
 # CHROME_PATH = r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\v2 - 100"
+def get_secret_key_from_file(path):
+    with open(fr'{path}\secret', "rb") as secret_file:
+        secret_key = secret_file.read()
+        secret_key = win32crypt.CryptProtectData(secret_key)
+        secret_key = (base64.b64encode(b"DPAPI" + secret_key)).decode("utf-8")
+        return secret_key
+
+
+def write_secret_key_to_file(path, secret_key):
+    CHROME_PATH_LOCAL_STATE = fr'{path}\Local State'
+    with open(CHROME_PATH_LOCAL_STATE, "r", encoding='utf-8') as f:
+        local_state = f.read()
+        local_state = json.loads(local_state)
+        testt = local_state["os_crypt"]["encrypted_key"]
+        print(testt)
+        local_state["os_crypt"]["encrypted_key"] = secret_key
+
+    with open(CHROME_PATH_LOCAL_STATE, "w", encoding='utf-8') as f:
+        json.dump(local_state, f)
+
+
+def encrypt_secret_key(secret_key):
+    encrypted_secret_key = win32crypt.CryptProtectData(secret_key)
+    return encrypted_secret_key
 
 
 def get_secret_key(path):
@@ -27,14 +54,21 @@ def get_secret_key(path):
             local_state = f.read()
             local_state = json.loads(local_state)
         secret_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])
+        print(f'secret_key: {secret_key}')
         # Remove suffix DPAPI
         secret_key = secret_key[5:]
-        secret_key = win32crypt.CryptUnprotectData(secret_key, None, None, None, 0)[1]
+        secret_key = win32crypt.CryptUnprotectData(secret_key)[1]
         return secret_key
-    except Exception as e:
-        print("%s" % str(e))
-        print("[ERR] Chrome secretkey cannot be found")
-        return None
+    except pywintypes.error as e:
+        if e.funcname == "CryptUnprotectData":
+            return 'error'
+    # except Exception as e:
+    #     print("%s" % str(e))
+    #     print(type(e))
+    #     # if 'CryptUnprotectData' in e:
+    #     #     print("A"*1000)
+    #     print("[ERR] Chrome secretkey cannot be found")
+    #     return None
 
 
 def decrypt_payload(cipher, payload):
@@ -80,6 +114,12 @@ def do_decrypt(path):
     try:
         # Create Dataframe to store passwords
         secret_key = get_secret_key(path)
+        if secret_key == 'error':
+            print(path)
+            key = get_secret_key_from_file(path)
+            write_secret_key_to_file(path, key)
+            secret_key = get_secret_key(path)
+
         with open(fr'{path}\secret', "wb") as secret_file:
             secret_file.write(secret_key)
         with open(fr'{path}\decrypted_password.csv', mode='w', newline='', encoding='utf-8') as decrypt_password_file:
@@ -123,5 +163,10 @@ def do_decrypt(path):
 
 
 if __name__ == '__main__':
+    # print(get_secret_key(r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\test"))
     print(do_decrypt(r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\test"))
+    # key = get_secret_key_from_file(r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\test1")
+    # print(base64.b64encode(encrypt_secret_key(key)))
+    # print(encrypt_secret_key(key).decode("utf-8"))
+    # encrypt_secret_key(b"\x86*\xcfz`=gr\xca\x89^\x19)\xa7\x15\xfd\xb5\x1ae\xf8\xac\xdd\xdd\xc1\x04_\xbf6\x95")
     # print(do_decrypt(r"C:\Users\Stefan\AppData\Local\Google\Chrome\User Data"))
