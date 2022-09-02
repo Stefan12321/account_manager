@@ -14,17 +14,13 @@ import zipfile
 from selenium import webdriver
 from GUI import Ui_MainWindow
 from PyQt5 import QtWidgets, QtGui, QtCore, Qt
-
 from user_agents.main import get_user_agent
 from html_editor.main import create_html
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from qt_material import apply_stylesheet
 from list_widget import Ui_Form as Ui_Custom_widget
 from create_account_dialog import Ui_Dialog as Ui_create_account_dialog
 from settings_dialog import Ui_Dialog as Ui_settings_dialog
 from password_decryptor.passwords_decryptor import do_decrypt
-
+from zipfile import ZipFile, Path
 
 def serialize(path, data: dict):
     """
@@ -333,11 +329,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listWidget.itemClicked.connect(self.item_click)
         self.CreateAccountButton.clicked.connect(self.create_profile)
         self.pushButtonDeleteAccounts.clicked.connect(self.delete_profiles)
-        self.exportProfileButton.clicked.connect(self.export)
+        self.exportProfileButton.clicked.connect(self.export_profiles)
+        self.importProfileButton.clicked.connect(self.import_profiles)
         self.checkBoxCkeckAll.stateChanged.connect(self.set_all_checkbox)
 
     def set_all_checkbox(self, state):
-
         for item in self.list_item_arr:
             widget = self.listWidget.itemWidget(item)
             item_state = widget.checkBox.checkState()
@@ -360,7 +356,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listWidget.setItemWidget(myQListWidgetItem, myQCustomQWidget)
         self.list_item_arr.append(myQListWidgetItem)
 
-    def export(self):
+    def export_profiles(self):
         checked_items = self.get_checked_items()
         export_path = fr"{self.base_path}\export.zip"
         if os.path.isfile(export_path):
@@ -369,6 +365,43 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.zip_directory([fr'{self.profiles_path}\{profile.name}' for profile in checked_items],
                                export_path)
         print("EXPORTED")
+
+    def import_profiles(self):
+        profile_names = os.listdir(fr"{os.path.dirname(os.path.realpath(__file__))}\profiles")
+        dlg = QtWidgets.QFileDialog()
+        if dlg.exec_():
+            filenames = dlg.selectedFiles()
+            if len(filenames) == 1:
+                pth = zipfile.Path(filenames[0])
+                profiles = list(pth.iterdir())
+                imported_accounts = [folder.name for folder in profiles]
+                msg = QtWidgets.QMessageBox()
+                msg.setIcon(QtWidgets.QMessageBox.Warning)
+                msg.setText(f"Are y sure you want to import accounts: {imported_accounts}")
+                msg.setWindowTitle("Warning")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+                retval = msg.exec()
+                if retval == 1024:
+                    same_items = [item for item in profile_names if item in imported_accounts]
+                    if len(same_items) > 0:
+                        msg = QtWidgets.QMessageBox()
+                        msg.setIcon(QtWidgets.QMessageBox.Warning)
+                        msg.setText(f"Accounts {same_items} is already exist. Overwrite?")
+                        msg.setWindowTitle("Warning")
+                        msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+                        retval = msg.exec()
+                        if retval == 1024:
+                            with ZipFile(filenames[0], 'r') as zipObj:
+                                zipObj.extractall('profiles')
+                                self.update_item_list()
+                                print("IMPORTED")
+                    else:
+                        with ZipFile(filenames[0], 'r') as zipObj:
+                            zipObj.extractall('profiles')
+                            self.update_item_list()
+                            print("IMPORTED")
+
+
 
     @staticmethod
     def zip_directory(folders_path: list, zip_path: str):
@@ -406,10 +439,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     shutil.rmtree(path=fr'{self.profiles_path}\{profile.name}')
                     self.listWidget.removeItemWidget(profile)
                 time.sleep(2)
-                self.list_item_arr = []
-                self.listWidget.clear()
-                for i in self.browsers_names:
-                    self.create_list_item(i)
+                self.update_item_list()
+
+    def update_item_list(self):
+        self.browsers_names = [item for item in os.listdir(fr"{os.path.dirname(os.path.realpath(__file__))}\profiles")
+                               if os.path.isdir(fr"{os.path.dirname(os.path.realpath(__file__))}\profiles\{item}")]
+        self.list_item_arr = []
+        self.listWidget.clear()
+        for i in self.browsers_names:
+            self.create_list_item(i)
 
     def create_profile(self):
         dlg = CreateAccountDialog()
