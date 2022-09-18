@@ -121,7 +121,10 @@ def do_decrypt(path):
             secret_key = get_secret_key(path)
 
         with open(fr'{path}\secret', "wb") as secret_file:
-            secret_file.write(secret_key)
+            if secret_key != "":
+                secret_file.write(secret_key)
+            else:
+                raise BaseException("empty secret_key")
         with open(fr'{path}\decrypted_password.csv', mode='w', newline='', encoding='utf-8') as decrypt_password_file:
             csv_writer = csv.writer(decrypt_password_file, delimiter=',')
             csv_writer.writerow(["index", "url", "username", "password"])
@@ -164,7 +167,7 @@ def do_decrypt(path):
 
 if __name__ == '__main__':
     # print(get_secret_key(r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\test"))
-    print(do_decrypt(r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\test"))
+    print(do_decrypt(r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\v2 - 146"))
     # key = get_secret_key_from_file(r"C:\Users\Stefan\PycharmProjects\accounts_manager\profiles\test1")
     # print(base64.b64encode(encrypt_secret_key(key)))
     # print(encrypt_secret_key(key).decode("utf-8"))

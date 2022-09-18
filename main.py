@@ -13,14 +13,16 @@ import zipfile
 
 from selenium import webdriver
 from GUI import Ui_MainWindow
-from PyQt5 import QtWidgets, QtGui, QtCore, Qt
+from PyQt5 import QtWidgets, QtGui, QtCore
 from user_agents.main import get_user_agent
 from html_editor.main import create_html
 from list_widget import Ui_Form as Ui_Custom_widget
 from create_account_dialog import Ui_Dialog as Ui_create_account_dialog
-from settings_dialog import Ui_Dialog as Ui_settings_dialog
+from dialogs.settings_dialog import Ui_Dialog as Ui_settings_dialog
+from dialogs.about_dialog import Ui_Dialog as Ui_about_dialog
 from password_decryptor.passwords_decryptor import do_decrypt
-from zipfile import ZipFile, Path
+from zipfile import ZipFile
+
 
 def serialize(path, data: dict):
     """
@@ -259,6 +261,7 @@ class QCustomQWidget(QtWidgets.QWidget):
                 data.update({"user-agent": dlg.user_agent_line.text()})
             serialize(path, data)
 
+
     def setTextUp(self, text):
         self.account_name_label.setText(text)
 
@@ -301,6 +304,13 @@ class SettingsDialog(Ui_settings_dialog, QtWidgets.QDialog):
             self.listWidgetExtensions.addItem(item)
 
 
+class AboutDlg(Ui_about_dialog, QtWidgets.QDialog):
+    def __init__(self):
+        QtWidgets.QDialog.__init__(self)
+        self.setupUi(self)
+        self.label_bild_number.setText('0.1')
+
+
 
 class QListCustomWidget(QtWidgets.QListWidgetItem):
     def __init__(self, parent=None):
@@ -332,6 +342,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.exportProfileButton.clicked.connect(self.export_profiles)
         self.importProfileButton.clicked.connect(self.import_profiles)
         self.checkBoxCkeckAll.stateChanged.connect(self.set_all_checkbox)
+        self.actionAbout.triggered.connect(self.open_about)
+
+    def open_about(self):
+        dlg = AboutDlg()
+        dlg.show()
+        dlg.exec()
 
     def set_all_checkbox(self, state):
         for item in self.list_item_arr:
@@ -383,6 +399,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 retval = msg.exec()
                 if retval == 1024:
                     same_items = [item for item in profile_names if item in imported_accounts]
+
                     if len(same_items) > 0:
                         msg = QtWidgets.QMessageBox()
                         msg.setIcon(QtWidgets.QMessageBox.Warning)
@@ -390,6 +407,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         msg.setWindowTitle("Warning")
                         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
                         retval = msg.exec()
+                        # TODO create else
                         if retval == 1024:
                             with ZipFile(filenames[0], 'r') as zipObj:
                                 zipObj.extractall('profiles')
@@ -463,6 +481,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 'user-agent': user_agent_
             }
             serialize(path, data)
+            # passwords = do_decrypt(path)
 
     def item_click(self, item: QListAccountsWidgetItem):
         account_name = self.listWidget.itemWidget(item).name
@@ -475,8 +494,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print("Thread created")
 
     def run_browser(self, name):
-        d = WebBrowser(path=fr"{os.path.dirname(os.path.realpath(__file__))}\profiles\{name}", account_name=name)
+        path = fr"{os.path.dirname(os.path.realpath(__file__))}\profiles\{name}"
+        d = WebBrowser(path=path, account_name=name)
         print(f"Browser {name} started")
+        passwords = do_decrypt(path)
 
     def start_threads_watcher(self):
         t = threading.Thread(target=self.threads_watcher)
