@@ -20,6 +20,7 @@ from list_widget import Ui_Form as Ui_Custom_widget
 from create_account_dialog import Ui_Dialog as Ui_create_account_dialog
 from dialogs.settings_dialog import Ui_Dialog as Ui_settings_dialog
 from dialogs.about_dialog import Ui_Dialog as Ui_about_dialog
+from dialogs.progress_bar import Ui_Dialog as Ui_progress_bar
 from password_decryptor.passwords_decryptor import do_decrypt
 from zipfile import ZipFile
 
@@ -261,7 +262,6 @@ class QCustomQWidget(QtWidgets.QWidget):
                 data.update({"user-agent": dlg.user_agent_line.text()})
             serialize(path, data)
 
-
     def setTextUp(self, text):
         self.account_name_label.setText(text)
 
@@ -311,6 +311,35 @@ class AboutDlg(Ui_about_dialog, QtWidgets.QDialog):
         self.label_bild_number.setText('0.1')
 
 
+class ProgressBarDialog(Ui_progress_bar, QtWidgets.QDialog):
+    def __init__(self):
+        QtWidgets.QDialog.__init__(self)
+        self.setupUi(self)
+
+    @QtCore.pyqtSlot(int)
+    def progress(self, value: int):
+        self.progressBar.setValue(value)
+
+    @QtCore.pyqtSlot(str)
+    def filename(self, name: str):
+        self.label_file.setText(name)
+
+    @QtCore.pyqtSlot()
+    def exit(self):
+        self.close()
+
+
+
+
+class ProgressBarDialogThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self.dlg = ProgressBarDialog()
+        self.dlg.show()
+        self.dlg.exec()
+
 
 class QListCustomWidget(QtWidgets.QListWidgetItem):
     def __init__(self, parent=None):
@@ -321,6 +350,9 @@ class QListCustomWidget(QtWidgets.QListWidgetItem):
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    progress_signal = QtCore.pyqtSignal(int)
+    progress_exit_signal = QtCore.pyqtSignal()
+    progress_filename_signal = QtCore.pyqtSignal(str)
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
@@ -344,11 +376,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.checkBoxCkeckAll.stateChanged.connect(self.set_all_checkbox)
         self.actionAbout.triggered.connect(self.open_about)
 
-    def open_about(self):
-        dlg = AboutDlg()
-        dlg.show()
-        dlg.exec()
-
     def set_all_checkbox(self, state):
         for item in self.list_item_arr:
             widget = self.listWidget.itemWidget(item)
@@ -371,6 +398,34 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listWidget.addItem(myQListWidgetItem)
         self.listWidget.setItemWidget(myQListWidgetItem, myQCustomQWidget)
         self.list_item_arr.append(myQListWidgetItem)
+
+    def extract_zip(self, path, forbidden=[]):
+
+        with ZipFile(path, 'r') as zipObj:
+            counter = 0
+            length = len(zipObj.filelist)
+
+            print(zipObj.filelist[0].filename.split('/')[0])
+            for file in zipObj.filelist:
+                if file.filename.split('/')[0] not in forbidden:
+                    zipObj.extract(file, './profiles')
+                    counter += 1
+                    self.progress_signal.emit(counter / (length / 100))
+                    self.progress_filename_signal.emit(file.filename)
+                    # progress_bar.dlg.label_file.setText(file.filename)
+                    print(f"{counter / (length / 100)}%")
+        self.progress_exit_signal.emit()
+
+    def progress_bar_thread(self, target, title, *args):
+        progress_bar = ProgressBarDialog()
+        progress_bar.show()
+        progress_bar.setWindowTitle(title)
+        self.progress_signal.connect(progress_bar.progress)
+        self.progress_exit_signal.connect(progress_bar.exit)
+        self.progress_filename_signal.connect(progress_bar.filename)
+        t = threading.Thread(target=target, args=args)
+        t.start()
+        progress_bar.exec()
 
     def export_profiles(self):
         checked_items = self.get_checked_items()
@@ -405,26 +460,30 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         msg.setIcon(QtWidgets.QMessageBox.Warning)
                         msg.setText(f"Accounts {same_items} is already exist. Overwrite?")
                         msg.setWindowTitle("Warning")
-                        msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+                        msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.No)
                         retval = msg.exec()
-                        # TODO create else
                         if retval == 1024:
-                            with ZipFile(filenames[0], 'r') as zipObj:
-                                zipObj.extractall('profiles')
-                                self.update_item_list()
-                                print("IMPORTED")
-                    else:
-                        with ZipFile(filenames[0], 'r') as zipObj:
-                            zipObj.extractall('profiles')
+                            self.progress_bar_thread(self.extract_zip, "Extracting", filenames[0])
                             self.update_item_list()
                             print("IMPORTED")
+                        else:
+                            self.progress_bar_thread(self.extract_zip, "Extracting", filenames[0], same_items)
+                            self.update_item_list()
+                            print("IMPORTED")
+                    else:
+                        self.progress_bar_thread(self.extract_zip, "Extracting", filenames[0])
+                        self.update_item_list()
+                        print("IMPORTED")
 
-
-
-    @staticmethod
-    def zip_directory(folders_path: list, zip_path: str):
+    def zip_directory(self, folders_path: list, zip_path: str):
+        progress_bar = self.open_progress_bar()
+        progress_bar.setWindowTitle("Export")
+        counter = 1
         with zipfile.ZipFile(zip_path, mode='w') as zipf:
+            length = len(folders_path)
             for folder_path in folders_path:
+                print(int(counter / (length / 100)))
+                progress_bar.progressBar.setValue(int(counter / (length / 100)))
                 base_folder = folder_path.split('\\')[-1]
                 print(base_folder)
                 len_dir_path = len(folder_path)
@@ -432,6 +491,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     for file in files:
                         file_path = os.path.join(root, file)
                         zipf.write(file_path, f'{base_folder}/{file_path[len_dir_path:]}')
+                counter += 1
+        progress_bar.done(0)
 
     def get_checked_items(self):
         checked_items = []
@@ -466,6 +527,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listWidget.clear()
         for i in self.browsers_names:
             self.create_list_item(i)
+
+    def open_progress_bar(self):
+        dlg = ProgressBarDialog()
+        self.progressbar_signal = dlg.signal
+        dlg.show()
+        dlg.exec()
+
+    def open_about(self):
+        dlg = AboutDlg()
+        dlg.show()
+        dlg.exec()
 
     def create_profile(self):
         dlg = CreateAccountDialog()
