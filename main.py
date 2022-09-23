@@ -329,8 +329,6 @@ class ProgressBarDialog(Ui_progress_bar, QtWidgets.QDialog):
         self.close()
 
 
-
-
 class ProgressBarDialogThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -353,6 +351,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     progress_signal = QtCore.pyqtSignal(int)
     progress_exit_signal = QtCore.pyqtSignal()
     progress_filename_signal = QtCore.pyqtSignal(str)
+
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
@@ -404,19 +403,25 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         with ZipFile(path, 'r') as zipObj:
             counter = 0
             length = len(zipObj.filelist)
-
-            print(zipObj.filelist[0].filename.split('/')[0])
+            # TODO if forbidden is not empty then length should be shorter
+            # print(zipObj.filelist[0].filename.split('/')[0])
             for file in zipObj.filelist:
                 if file.filename.split('/')[0] not in forbidden:
                     zipObj.extract(file, './profiles')
                     counter += 1
-                    self.progress_signal.emit(counter / (length / 100))
+                    self.progress_signal.emit(int(counter / (length / 100)))
                     self.progress_filename_signal.emit(file.filename)
-                    # progress_bar.dlg.label_file.setText(file.filename)
-                    print(f"{counter / (length / 100)}%")
+                    # print(f"{counter / (length / 100)}%")
         self.progress_exit_signal.emit()
 
     def progress_bar_thread(self, target, title, *args):
+        """
+
+        :param target: target function
+        :param title: title for progress window
+        :param args: args for target function
+        :return:
+        """
         progress_bar = ProgressBarDialog()
         progress_bar.show()
         progress_bar.setWindowTitle(title)
@@ -433,8 +438,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if os.path.isfile(export_path):
             os.remove(export_path)
         if len(checked_items) > 0:
-            self.zip_directory([fr'{self.profiles_path}\{profile.name}' for profile in checked_items],
-                               export_path)
+            self.progress_bar_thread(self.zip_directory, "Exporting",
+                                     [fr'{self.profiles_path}\{profile.name}' for profile in checked_items],
+                                     export_path)
+            # self.zip_directory([fr'{self.profiles_path}\{profile.name}' for profile in checked_items],
+            #                    export_path)
         print("EXPORTED")
 
     def import_profiles(self):
@@ -463,36 +471,36 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.No)
                         retval = msg.exec()
                         if retval == 1024:
-                            self.progress_bar_thread(self.extract_zip, "Extracting", filenames[0])
+                            self.progress_bar_thread(self.extract_zip, "Importing", filenames[0])
                             self.update_item_list()
                             print("IMPORTED")
                         else:
-                            self.progress_bar_thread(self.extract_zip, "Extracting", filenames[0], same_items)
+                            self.progress_bar_thread(self.extract_zip, "Importing", filenames[0], same_items)
                             self.update_item_list()
                             print("IMPORTED")
                     else:
-                        self.progress_bar_thread(self.extract_zip, "Extracting", filenames[0])
+                        self.progress_bar_thread(self.extract_zip, "Importing", filenames[0])
                         self.update_item_list()
                         print("IMPORTED")
 
     def zip_directory(self, folders_path: list, zip_path: str):
-        progress_bar = self.open_progress_bar()
-        progress_bar.setWindowTitle("Export")
+
         counter = 1
         with zipfile.ZipFile(zip_path, mode='w') as zipf:
             length = len(folders_path)
             for folder_path in folders_path:
-                print(int(counter / (length / 100)))
-                progress_bar.progressBar.setValue(int(counter / (length / 100)))
                 base_folder = folder_path.split('\\')[-1]
-                print(base_folder)
+                # print(base_folder)
+                self.progress_signal.emit(int(counter / (length / 100)))
+                self.progress_filename_signal.emit(base_folder)
                 len_dir_path = len(folder_path)
                 for root, _, files in os.walk(folder_path):
                     for file in files:
                         file_path = os.path.join(root, file)
                         zipf.write(file_path, f'{base_folder}/{file_path[len_dir_path:]}')
                 counter += 1
-        progress_bar.done(0)
+        self.progress_exit_signal.emit()
+        # progress_bar.done(0)
 
     def get_checked_items(self):
         checked_items = []
@@ -514,11 +522,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             retval = msg.exec()
             if retval == 1024:
-                for profile in checked_items:
-                    shutil.rmtree(path=fr'{self.profiles_path}\{profile.name}')
-                    self.listWidget.removeItemWidget(profile)
-                time.sleep(2)
+                self.progress_bar_thread(self.delete_profiles_thread, "Deleting", checked_items)
                 self.update_item_list()
+
+    def delete_profiles_thread(self, checked_items):
+        counter = 1
+        length = len(checked_items)
+        for profile in checked_items:
+            shutil.rmtree(path=fr'{self.profiles_path}\{profile.name}')
+            self.listWidget.removeItemWidget(profile)
+            self.progress_signal.emit(int(counter / (length / 100)))
+            # print(type(profile.name))
+            self.progress_filename_signal.emit(profile.name)
+            counter += 1
+
+        # time.sleep(2)
+        self.progress_exit_signal.emit()
+
+
 
     def update_item_list(self):
         self.browsers_names = [item for item in os.listdir(fr"{os.path.dirname(os.path.realpath(__file__))}\profiles")
