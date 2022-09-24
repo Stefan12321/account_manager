@@ -308,7 +308,7 @@ class AboutDlg(Ui_about_dialog, QtWidgets.QDialog):
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
-        self.label_bild_number.setText('0.1')
+        self.label_bild_number.setText('0.2')
 
 
 class ProgressBarDialog(Ui_progress_bar, QtWidgets.QDialog):
