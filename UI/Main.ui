@@ -227,6 +227,7 @@ color: rgb(255, 255, 255);
      <string>Help</string>
     </property>
     <addaction name="actionAbout"/>
+    <addaction name="actionSettings"/>
    </widget>
    <addaction name="menuHelp"/>
   </widget>
@@ -244,6 +245,11 @@ color: rgb(255, 255, 255);
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
    </property>
   </action>
  </widget>
