@@ -1,5 +1,7 @@
 from multiprocessing import freeze_support
 
+import autoreg.autoreg
+
 freeze_support()
 
 import os
@@ -21,8 +23,11 @@ from create_account_dialog import Ui_Dialog as Ui_create_account_dialog
 from dialogs.settings_dialog import Ui_Dialog as Ui_settings_dialog
 from dialogs.about_dialog import Ui_Dialog as Ui_about_dialog
 from dialogs.progress_bar import Ui_Dialog as Ui_progress_bar
+from dialogs.settings_main import Ui_Dialog as Ui_main_settings_dialog
 from password_decryptor.passwords_decryptor import do_decrypt
 from zipfile import ZipFile
+from autoreg.autoreg import reg_outlook
+from autoreg.namefake_api import Person
 
 
 def serialize(path, data: dict):
@@ -32,7 +37,7 @@ def serialize(path, data: dict):
     :param data: dict of settings
     :return: None
     """
-    with open(f'{path}/config.json', 'w') as f:
+    with open(path, 'w') as f:
         try:
             json.dump(data, f)
             print(f"Serialized data: {data}")
@@ -46,7 +51,7 @@ def deserialize(path) -> dict:
     :param path: path to config.json
     :return: list of deserialized data from config.json
     """
-    with open(fr'{path}\config.json', 'r') as f:
+    with open(path, 'r') as f:
         data = json.load(f)
 
     return data
@@ -59,20 +64,30 @@ class WebBrowser:
 
     def start_undetected_chrome(self, path, account_name):
         if os.path.isdir(path):
+            #  get user agent from config.json
             try:
-                data = deserialize(path)
+                data = deserialize(fr'{path}\config.json')
+                #  get line number from config.json
+                try:
+                    line = data["line_number"]
+                except KeyError as e:
+                    if str(e).replace("'", "") == "line_number":
+                        pass
+                    else:
+                        raise KeyError
                 user_agent_ = data["user-agent"]
             except FileNotFoundError:
                 user_agent_ = get_user_agent(os=("win"), navigator=("chrome"), device_type=("desktop"))
                 data = {
                     'user-agent': user_agent_
                 }
-                serialize(path, data)
+                serialize(fr'{path}\config.json', data)
                 user_agent_ = self.write_to_file(path)
             except KeyError as e:
                 if str(e).replace("'", "") == "user-agent":
                     user_agent_ = get_user_agent(os=("win"), navigator=("chrome"), device_type=("desktop"))
                     data.update({"user-agent": user_agent_})
+
         else:
             user_agent_ = get_user_agent(os=("win"), navigator=("chrome"), device_type=("desktop"))
             data = {
@@ -80,8 +95,7 @@ class WebBrowser:
             }
 
             os.makedirs(path)
-            serialize(path, data)
-
+            serialize(fr'{path}\config.json', data)
         index = f"{path}/init.html"
         base_dir = os.path.dirname(os.path.realpath(__file__))
         options = uc.ChromeOptions()
@@ -94,9 +108,13 @@ class WebBrowser:
         options.add_argument(f'--user-data-dir={path}')
         options.add_argument(f"--user-agent={user_agent_}")
         options.add_argument(f"-enable-features=PasswordImport")
-        # options.add_argument(f'--password-store=gnome')
+        settings_main = deserialize('./settings.json')
+        version_main = settings_main["chrome_version"]
+        autoreg_ = settings_main["autoreg"]
+        autoreg.autoreg.spreadsheetId = settings_main["spreadsheet_id"]
+
         try:
-            driver = uc.Chrome(options=options)
+            driver = uc.Chrome(options=options, version_main=version_main)
         except Exception as e:
             print(e)
         if os.path.exists(index):
@@ -104,18 +122,14 @@ class WebBrowser:
         else:
             create_html(index, account_name)
             driver.get(index)
-        # driver.switch_to.new_window('tab')
-        # driver.get("https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html")
         driver.switch_to.new_window('tab')
         driver.get("https://whoer.net/")
-        # driver.get("https://proxyleak.com/")
-        # driver.switch_to.new_window('tab')
-        # driver.get("chrome://settings/passwords")
-        # driver.implicitly_wait(2)
-        # shadow_host = driver.find_element(By.CSS_SELECTOR, '#shadow-root')
-        # shadow_root = shadow_host.shadow_root
-        # shadow_content = shadow_root.find_element(By.CSS_SELECTOR, '#shadow-root')
-        # shadow_content.find_element(By.ID, "menuImportPassword").click()
+
+        # enabling auto registration
+        if autoreg_ == 2:
+            person = Person()
+            print(person)
+            reg_outlook(driver, person, int(line))
         try:
             while len(driver.window_handles) > 0:
                 time.sleep(1)
@@ -164,7 +178,7 @@ class WebBrowser:
 
     @staticmethod
     def read_from_file(path: str) -> str:
-        data = deserialize(path)
+        data = deserialize(fr'{path}\config.json')
         user_agent_ = data["user-agent"]
         print(f"Read user agent: {user_agent_}")
         return user_agent_
@@ -175,7 +189,7 @@ class WebBrowser:
         data = {
             'user-agent': user_agent_
         }
-        serialize(path, data)
+        serialize(fr'{path}\config.json', data)
         return user_agent_
 
 
@@ -205,6 +219,23 @@ class QCustomQWidget(QtWidgets.QWidget):
         self.pushButtonSettings.clicked.connect(lambda: self.open_settings())
 
         self.checkBox = QtWidgets.QCheckBox()
+        # self.checkBox.setStyleSheet("QCheckBox"
+        #               "{"
+        #               "    background-color: white;"
+        #               "               color: black;"
+        #               "}"
+        #               "QCheckBox::indicator"
+        #               "{"
+        #               "     width: 50px;"
+                      # "    height: 50px;"
+                      # "}")
+        # self.checkBox.setGeometry(200, 150, 100, 80)
+        # self.checkBox.setStyleSheet("QCheckBox::indicator"
+        #                        "{"
+        #                        "width :100px;"
+        #                        "height : 100px;"
+        #                        "}")
+
         self.textQVBoxLayout.addWidget(self.checkBox)
         self.textQVBoxLayout.addWidget(self.account_name_label)
         self.textQVBoxLayout.addWidget(self.running_status_label)
@@ -225,23 +256,31 @@ class QCustomQWidget(QtWidgets.QWidget):
     def open_settings(self):
         path = fr'{os.path.dirname(os.path.realpath(__file__))}\profiles\{self.name}'
         try:
-            data = deserialize(path)
+            data = deserialize(fr'{path}\config.json')
             user_agent = data["user-agent"]
         except FileNotFoundError:
             data = {}
             user_agent = ""
         except KeyError:
-            data = deserialize(path)
+            data = deserialize(fr'{path}\config.json')
             user_agent = ""
         try:
             extensions = data["extensions"]
         except Exception as e:
             extensions = {}
+        try:
+            line_number = data["line_number"]
+        except:
+            line_number = ""
         checked = 2
         dlg = SettingsDialog(user_agent=user_agent, account_name=self.name)
         try:
             passwords = do_decrypt(path)
             dlg.passwords_textBrowser.setText(passwords)
+        except:
+            pass
+        try:
+            dlg.lineEdit_line_number.setText(str(line_number))
         except:
             pass
         for item in dlg.items:
@@ -260,7 +299,9 @@ class QCustomQWidget(QtWidgets.QWidget):
             data.update({"extensions": extensions})
             if dlg.user_agent_line.text() != user_agent:
                 data.update({"user-agent": dlg.user_agent_line.text()})
-            serialize(path, data)
+            if dlg.lineEdit_line_number.text() != line_number:
+                data.update({"line_number": int(dlg.lineEdit_line_number.text())})
+            serialize(fr'{path}\config.json', data)
 
     def setTextUp(self, text):
         self.account_name_label.setText(text)
@@ -308,8 +349,13 @@ class AboutDlg(Ui_about_dialog, QtWidgets.QDialog):
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
-        self.label_bild_number.setText('0.2')
+        self.label_bild_number.setText('0.3auto')
 
+
+class MainSettings(Ui_main_settings_dialog, QtWidgets.QDialog):
+    def __init__(self):
+        QtWidgets.QDialog.__init__(self)
+        self.setupUi(self)
 
 class ProgressBarDialog(Ui_progress_bar, QtWidgets.QDialog):
     def __init__(self):
@@ -374,6 +420,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.importProfileButton.clicked.connect(self.import_profiles)
         self.checkBoxCkeckAll.stateChanged.connect(self.set_all_checkbox)
         self.actionAbout.triggered.connect(self.open_about)
+        self.actionSettings.triggered.connect(self.open_main_settings)
 
     def set_all_checkbox(self, state):
         for item in self.list_item_arr:
@@ -560,6 +607,26 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         dlg.show()
         dlg.exec()
 
+    def open_main_settings(self):
+        settings_main = deserialize("./settings.json")
+        version_main = settings_main["chrome_version"]
+        autoreg_ = settings_main["autoreg"]
+
+        dlg = MainSettings()
+        dlg.chrome_version_lineEdit.setText(str(version_main))
+        dlg.checkBox_autoreg.setCheckState(autoreg_)
+        dlg.show()
+        result = dlg.exec()
+        if result:
+            print(dlg.checkBox_autoreg.checkState())
+            try:
+                if dlg.chrome_version_lineEdit.text() != str(version_main) or dlg.checkBox_autoreg.checkState() != autoreg_:
+                    data = {"chrome_version": int(dlg.chrome_version_lineEdit.text()),
+                            "autoreg": dlg.checkBox_autoreg.checkState()}
+                    serialize('./settings.json', data)
+            except Exception as e:
+                print(e)
+
     def create_profile(self):
         dlg = CreateAccountDialog()
         dlg.show()
@@ -573,7 +640,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             data = {
                 'user-agent': user_agent_
             }
-            serialize(path, data)
+            serialize(fr'{path}\config.json', data)
             # passwords = do_decrypt(path)
 
     def item_click(self, item: QListAccountsWidgetItem):

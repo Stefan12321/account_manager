@@ -15,7 +15,7 @@ executables = [Executable("main.py",
                ]
 
 # includes = ['chromedriver.exe']
-includes = ['extension','icons']
+includes = ['extension','icons', './settings.json']
 
 packages = ["os", "threading", "time", "PyQt5", "selenium", "json", "user_agents", "undetected_chromedriver",
             "html_editor"]

@@ -139,7 +139,10 @@ class Ui_MainWindow(object):
         self.actionLoad.setObjectName("actionLoad")
         self.actionAbout = QtWidgets.QAction(MainWindow)
         self.actionAbout.setObjectName("actionAbout")
+        self.actionSettings = QtWidgets.QAction(MainWindow)
+        self.actionSettings.setObjectName("actionSettings")
         self.menuHelp.addAction(self.actionAbout)
+        self.menuHelp.addAction(self.actionSettings)
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
@@ -156,3 +159,4 @@ class Ui_MainWindow(object):
         self.actionSave.setText(_translate("MainWindow", "Save"))
         self.actionLoad.setText(_translate("MainWindow", "Load"))
         self.actionAbout.setText(_translate("MainWindow", "About"))
+        self.actionSettings.setText(_translate("MainWindow", "Settings"))
