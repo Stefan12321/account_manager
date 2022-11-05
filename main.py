@@ -111,7 +111,7 @@ class WebBrowser:
         settings_main = deserialize('./settings.json')
         version_main = settings_main["chrome_version"]
         autoreg_ = settings_main["autoreg"]
-        autoreg.autoreg.spreadsheetId = settings_main["spreadsheet_id"]
+        autoreg.autoreg.spreadsheetId = settings_main["spreadsheetId"]
 
         try:
             driver = uc.Chrome(options=options, version_main=version_main)
@@ -623,7 +623,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if dlg.chrome_version_lineEdit.text() != str(version_main) or dlg.checkBox_autoreg.checkState() != autoreg_:
                     data = {"chrome_version": int(dlg.chrome_version_lineEdit.text()),
                             "autoreg": dlg.checkBox_autoreg.checkState()}
-                    serialize('./settings.json', data)
+                    settings_main.update(data)
+                    serialize('./settings.json', settings_main)
             except Exception as e:
                 print(e)
 

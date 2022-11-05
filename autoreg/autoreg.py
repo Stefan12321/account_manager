@@ -17,6 +17,7 @@ spreadsheetId = ""
 
 
 def reg_outlook(driver: undetected_chromedriver.Chrome, person: Person, line: int):
+    mail = "@outlook.com"
     google_sheet = GoogleSheet(spreadsheetId)
     print(f"Line: {line}")
     url = "https://www.microsoft.com/uk-ua/microsoft-365/outlook/email-and-calendar-software-microsoft-outlook"
@@ -33,12 +34,18 @@ def reg_outlook(driver: undetected_chromedriver.Chrome, person: Person, line: in
     driver.implicitly_wait(1)
     driver.find_element(By.CSS_SELECTOR, "#MemberName").send_keys(person.email_u)
     time.sleep(1)
+    if bool(random.getrandbits(1)):
+        domain_select = Select(driver.find_element(By.CSS_SELECTOR, '#LiveDomainBoxList '))
+        domain_select.select_by_index(1)
+        mail = "@hotmail.com"
+
     driver.find_element(By.CSS_SELECTOR, "#iSignupAction").click()
     time.sleep(4)
     # driver.implicitly_wait(1)
     try:
         driver.find_element(By.CSS_SELECTOR, "#MemberNameError")
         person.email_u = person.email_u + secrets.choice(string.ascii_lowercase)
+        driver.find_element(By.CSS_SELECTOR, "#MemberName").clear()
         driver.find_element(By.CSS_SELECTOR, "#MemberName").send_keys(person.email_u)
         driver.find_element(By.CSS_SELECTOR, "#iSignupAction").click()
     except:
@@ -64,7 +71,7 @@ def reg_outlook(driver: undetected_chromedriver.Chrome, person: Person, line: in
     driver.implicitly_wait(1)
     driver.find_element(By.CSS_SELECTOR, "#iSignupAction").click()
     # google_sheet.write_data(range_=f"Лист1!B{line}:C{line}", Data=[])
-    google_sheet.write_data(range_=f"Лист1!B{line}:C{line}", Data=[person.email_u + "@outlook.com", person.password])
+    google_sheet.write_data(range_=f"Лист1!B{line}:C{line}", Data=[person.email_u + mail, person.password])
     # time.sleep(1000)
 
 
