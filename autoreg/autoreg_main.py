@@ -9,11 +9,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from autoreg.namefake_api import Person
 from autoreg.google_sheet import GoogleSheet
+
 # from namefake_api import Person
 # from google_sheet import GoogleSheet
 
 spreadsheetId = ""
-
 
 
 def reg_outlook(driver: undetected_chromedriver.Chrome, person: Person, line: int):
@@ -21,7 +21,7 @@ def reg_outlook(driver: undetected_chromedriver.Chrome, person: Person, line: in
     google_sheet = GoogleSheet(spreadsheetId)
     print(f"Line: {line}")
     url = "https://www.microsoft.com/uk-ua/microsoft-365/outlook/email-and-calendar-software-microsoft-outlook"
-    create_account_xpath = '//*[@aria-label="Створити безкоштовний обліковий запис Microsoft Outlook"]'
+    create_account_xpath = "//a[contains(text(),'Створити безкоштовний обліковий запис')]"
     time.sleep(1)
     driver.switch_to.new_window('tab')
     driver.get(url)
@@ -95,14 +95,23 @@ def setup_proxy(driver: undetected_chromedriver.Chrome, ip: str, port: str):
     time.sleep(10000)
 
 
-if __name__ == '__main__':
+def test_google_sheet():
+    try:
+        gs = GoogleSheet("1ey5LH_3lcVIeOLjNjkdno2xp4R4l5ybSZGJpmbXEyKA")
+        gs.write_data(range_=f"Лист1!B{356}:C{356}", Data=["AAAA", "BBBBB"])
+    except Exception as e:
+        print(e)
 
+
+if __name__ == '__main__':
+    gs = GoogleSheet("1ey5LH_3lcVIeOLjNjkdno2xp4R4l5ybSZGJpmbXEyKA")
+    gs.write_data(range_=f"Лист1!B{356}:C{356}", Data=["AAAA", "BBBBB"])
     # person = Person()
     # print(person)
 
-    options = undetected_chromedriver.ChromeOptions()
-    options.add_argument(
-        fr'--load-extension=C:\Users\Stefan\PycharmProjects\accounts_manager\extension\Proxy-SwitchyOmega')
-    driver = undetected_chromedriver.Chrome(version_main=106, options=options)
-    setup_proxy(driver, "192.168.0.1", "9876")
+    # options = undetected_chromedriver.ChromeOptions()
+    # options.add_argument(
+    #     fr'--load-extension=C:\Users\Stefan\PycharmProjects\accounts_manager\extension\Proxy-SwitchyOmega')
+    # driver = undetected_chromedriver.Chrome(version_main=106, options=options)
+    # setup_proxy(driver, "192.168.0.1", "9876")
     # reg_outlook(driver, person, line=312)

@@ -1,3 +1,5 @@
+import time
+
 import requests
 # necessary imports
 import secrets
@@ -34,16 +36,33 @@ class Person:
         self.password = password_generator()
 
     def get_person_data(self):
-        api_url = "https://api.namefake.com/ukrainian-ukraine/"
-        res = requests.get(api_url).json()
-        return res
+        api_url_namefake = "https://api.namefake.com/ukrainian-ukraine/"
+        api_url_reserv = "https://random-data-api.com/api/v2/users"
+        try:
+            res = requests.get(api_url_namefake).json()
+            self.name = res['name']
+            return res
+        except requests.exceptions.ConnectionError:
+            print("Use reserv api")
+            res = requests.get(api_url_reserv).json()
+            print(res)
+            result = {}
+            result.update({"name": res["first_name"],
+                           "last_name": res["last_name"],
+                           "email_u": res["email"].split("@")[0],
+                           "username": res["username"],
+                           "height": random.randint(150,200),
+                           "blood": random.randint(0,3),
+                           "weight": random.randint(50, 120)})
+            return result
 
     def generate_email(self):
         parameters_nums = ['height', 'weight', 'blood']
-        parameters_str = ['email_u', 'username'] #'eye', 'sport'
+        parameters_str = ['email_u', 'username']  # 'eye', 'sport'
         result = ""
         data = self.get_person_data()
-        result += str(data[random.choice(parameters_str)]) + random.choice(["", "_", "-", "."]) + str(data[random.choice(parameters_nums)])
+        result += str(data[random.choice(parameters_str)]) + random.choice(["", "_", "-", "."]) + str(
+            data[random.choice(parameters_nums)])
         return result[0:-1].replace(" ", "")
 
     def __str__(self):
@@ -54,9 +73,17 @@ class Person:
 
 
 if __name__ == '__main__':
-    p = Person()
+    for i in range(50):
+        try:
+            print(f"---------------{i}---------------")
+            p = Person()
+            print(p)
+        except Exception as e:
+            print(f"Exception: {e}")
+            break
+        time.sleep(2)
     # print(p.get_person_data())
     # print(p.generate_email())
-    print(p)
+
 
     # password_generator()

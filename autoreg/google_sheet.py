@@ -3,16 +3,15 @@ import threading
 import httplib2
 import googleapiclient.discovery
 from oauth2client.service_account import ServiceAccountCredentials
-import random
-import string
-import re
-from random import randint
-# from logger import setup_logger
+
+import os
 
 class GoogleSheet:
     def __init__(self, spreadsheetId):
         self.spreadsheetId = spreadsheetId
-        self.CREDENTIALS_FILE = 'autoreg/long-axle-300911-206a7e12084a.json'
+        # print(os.path.dirname(__file__))
+
+        self.CREDENTIALS_FILE = f'{os.path.dirname(__file__)}/long-axle-300911-206a7e12084a.json'
 
     def write_data(self, range_, Data):
 

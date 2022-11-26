@@ -1,6 +1,6 @@
 from multiprocessing import freeze_support
 
-import autoreg.autoreg
+import autoreg.autoreg_main
 
 freeze_support()
 
@@ -26,8 +26,10 @@ from dialogs.progress_bar import Ui_Dialog as Ui_progress_bar
 from dialogs.settings_main import Ui_Dialog as Ui_main_settings_dialog
 from password_decryptor.passwords_decryptor import do_decrypt
 from zipfile import ZipFile
-from autoreg.autoreg import reg_outlook
+from autoreg.autoreg_main import reg_outlook
 from autoreg.namefake_api import Person
+
+
 
 
 def serialize(path, data: dict):
@@ -56,6 +58,7 @@ def deserialize(path) -> dict:
 
     return data
 
+DEBUG = deserialize('./settings.json')["debug"]
 
 class WebBrowser:
     def __init__(self, path, account_name):
@@ -111,7 +114,8 @@ class WebBrowser:
         settings_main = deserialize('./settings.json')
         version_main = settings_main["chrome_version"]
         autoreg_ = settings_main["autoreg"]
-        autoreg.autoreg.spreadsheetId = settings_main["spreadsheetId"]
+        onload_pages = settings_main["onload_pages"]
+        autoreg.autoreg_main.spreadsheetId = settings_main["spreadsheetId"]
 
         try:
             driver = uc.Chrome(options=options, version_main=version_main)
@@ -122,8 +126,18 @@ class WebBrowser:
         else:
             create_html(index, account_name)
             driver.get(index)
-        driver.switch_to.new_window('tab')
-        driver.get("https://whoer.net/")
+        for page in onload_pages:
+            try:
+                driver.switch_to.new_window('tab')
+                driver.get(page)
+            except Exception as e:
+                print(e)
+        # driver.switch_to.new_window('tab')
+        # driver.get("https://whoer.net/")
+        # driver.switch_to.new_window('tab')
+        # driver.get('https://fortunejack.com/')
+        # driver.switch_to.new_window('tab')
+        # driver.get('https://nowsecure.nl')
 
         # enabling auto registration
         if autoreg_ == 2:
@@ -274,6 +288,7 @@ class QCustomQWidget(QtWidgets.QWidget):
             line_number = ""
         checked = 2
         dlg = SettingsDialog(user_agent=user_agent, account_name=self.name)
+
         try:
             passwords = do_decrypt(path)
             dlg.passwords_textBrowser.setText(passwords)
@@ -331,6 +346,13 @@ class SettingsDialog(Ui_settings_dialog, QtWidgets.QDialog):
     def __init__(self, parent=None, user_agent="", account_name=""):
         super(SettingsDialog, self).__init__(parent)
         self.setupUi(self)
+        if DEBUG:
+            self.CheckGSButton = QtWidgets.QPushButton(self)
+            self.CheckGSButton.setStyleSheet("")
+            self.CheckGSButton.setObjectName("CheckGSButton")
+            self.verticalLayout.addWidget(self.CheckGSButton)
+            self.CheckGSButton.setText("CheckGS")
+            self.CheckGSButton.clicked.connect(autoreg.autoreg_main.test_google_sheet)
         self.items = []
         self.name = account_name
         self.user_agent_line.setText(user_agent)
@@ -349,14 +371,74 @@ class AboutDlg(Ui_about_dialog, QtWidgets.QDialog):
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
-        self.label_bild_number.setText('0.3auto')
+        self.label_bild_number.setText('0.4')
 
 
 class MainSettings(Ui_main_settings_dialog, QtWidgets.QDialog):
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
+        self.pages_list = []
+        self.pages_dict = {}
+        self.add_functions()
+        self.lineEditAddPage.setText("index")
 
+    def add_one_page_onload(self, page_url):
+        try:
+            # print(page_url)
+            horizontalLayout_2 = QtWidgets.QHBoxLayout()
+            horizontalLayout_2.setObjectName("horizontalLayout_2")
+            lineEditAddPage = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(lineEditAddPage.sizePolicy().hasHeightForWidth())
+            lineEditAddPage.setSizePolicy(sizePolicy)
+            lineEditAddPage.setObjectName("lineEditAddPage")
+            horizontalLayout_2.addWidget(lineEditAddPage)
+            pushButton_remove_page = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
+            pushButton_remove_page.setEnabled(True)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(pushButton_remove_page.sizePolicy().hasHeightForWidth())
+            pushButton_remove_page.setSizePolicy(sizePolicy)
+            pushButton_remove_page.setMaximumSize(QtCore.QSize(30, 30))
+            pushButton_remove_page.setObjectName("pushButton_remove_page")
+            pushButton_remove_page.setText("-")
+            pushButton_remove_page.clicked.connect(lambda: self.deleteItemsOfLayout(horizontalLayout_2))
+            horizontalLayout_2.addWidget(pushButton_remove_page)
+            self.verticalLayout_2.addLayout(horizontalLayout_2)
+            if page_url:
+                lineEditAddPage.setText(page_url)
+
+            self.pages_list.append(lineEditAddPage)
+            self.pages_dict.update({horizontalLayout_2: lineEditAddPage})
+            # print(horizontalLayout_2)
+            # print(self.pages_dict)
+
+        except Exception as e:
+            print(e)
+
+    def deleteItemsOfLayout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+
+                widget = item.widget()
+                if widget is not None:
+                    widget.setParent(None)
+                else:
+                    self.deleteItemsOfLayout(item.layout())
+            try:
+                self.pages_dict.pop(layout)
+                # print(self.pages_dict)
+            except Exception as e:
+                print(e)
+
+
+    def add_functions(self):
+        self.pushButton_add_page.clicked.connect(self.add_one_page_onload)
 class ProgressBarDialog(Ui_progress_bar, QtWidgets.QDialog):
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
@@ -611,22 +693,33 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         settings_main = deserialize("./settings.json")
         version_main = settings_main["chrome_version"]
         autoreg_ = settings_main["autoreg"]
+        onload_pages = settings_main["onload_pages"]
+        pages_list = []
 
         dlg = MainSettings()
         dlg.chrome_version_lineEdit.setText(str(version_main))
         dlg.checkBox_autoreg.setCheckState(autoreg_)
+
+        for page in onload_pages:
+            dlg.add_one_page_onload(page)
         dlg.show()
         result = dlg.exec()
         if result:
-            print(dlg.checkBox_autoreg.checkState())
+            # print(dlg.checkBox_autoreg.checkState())
+            print(f"Pages dict: {dlg.pages_dict}")
+
+            for layout in dlg.pages_dict.keys():
+                pages_list.append(dlg.pages_dict[layout].text())
+            settings_main.update({"onload_pages": pages_list})
             try:
                 if dlg.chrome_version_lineEdit.text() != str(version_main) or dlg.checkBox_autoreg.checkState() != autoreg_:
                     data = {"chrome_version": int(dlg.chrome_version_lineEdit.text()),
                             "autoreg": dlg.checkBox_autoreg.checkState()}
                     settings_main.update(data)
-                    serialize('./settings.json', settings_main)
+
             except Exception as e:
                 print(e)
+            serialize('./settings.json', settings_main)
 
     def create_profile(self):
         dlg = CreateAccountDialog()
