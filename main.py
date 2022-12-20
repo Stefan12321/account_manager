@@ -30,8 +30,6 @@ from autoreg.autoreg_main import reg_outlook
 from autoreg.namefake_api import Person
 
 
-
-
 def serialize(path, data: dict):
     """
 
@@ -58,7 +56,9 @@ def deserialize(path) -> dict:
 
     return data
 
+
 DEBUG = deserialize('./settings.json')["debug"]
+
 
 class WebBrowser:
     def __init__(self, path, account_name):
@@ -132,14 +132,6 @@ class WebBrowser:
                 driver.get(page)
             except Exception as e:
                 print(e)
-        # driver.switch_to.new_window('tab')
-        # driver.get("https://whoer.net/")
-        # driver.switch_to.new_window('tab')
-        # driver.get('https://fortunejack.com/')
-        # driver.switch_to.new_window('tab')
-        # driver.get('https://nowsecure.nl')
-
-        # enabling auto registration
         if autoreg_ == 2:
             person = Person()
             print(person)
@@ -233,22 +225,6 @@ class QCustomQWidget(QtWidgets.QWidget):
         self.pushButtonSettings.clicked.connect(lambda: self.open_settings())
 
         self.checkBox = QtWidgets.QCheckBox()
-        # self.checkBox.setStyleSheet("QCheckBox"
-        #               "{"
-        #               "    background-color: white;"
-        #               "               color: black;"
-        #               "}"
-        #               "QCheckBox::indicator"
-        #               "{"
-        #               "     width: 50px;"
-                      # "    height: 50px;"
-                      # "}")
-        # self.checkBox.setGeometry(200, 150, 100, 80)
-        # self.checkBox.setStyleSheet("QCheckBox::indicator"
-        #                        "{"
-        #                        "width :100px;"
-        #                        "height : 100px;"
-        #                        "}")
 
         self.textQVBoxLayout.addWidget(self.checkBox)
         self.textQVBoxLayout.addWidget(self.account_name_label)
@@ -436,9 +412,10 @@ class MainSettings(Ui_main_settings_dialog, QtWidgets.QDialog):
             except Exception as e:
                 print(e)
 
-
     def add_functions(self):
         self.pushButton_add_page.clicked.connect(self.add_one_page_onload)
+
+
 class ProgressBarDialog(Ui_progress_bar, QtWidgets.QDialog):
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
@@ -668,8 +645,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # time.sleep(2)
         self.progress_exit_signal.emit()
 
-
-
     def update_item_list(self):
         self.browsers_names = [item for item in os.listdir(fr"{os.path.dirname(os.path.realpath(__file__))}\profiles")
                                if os.path.isdir(fr"{os.path.dirname(os.path.realpath(__file__))}\profiles\{item}")]
@@ -712,7 +687,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 pages_list.append(dlg.pages_dict[layout].text())
             settings_main.update({"onload_pages": pages_list})
             try:
-                if dlg.chrome_version_lineEdit.text() != str(version_main) or dlg.checkBox_autoreg.checkState() != autoreg_:
+                if dlg.chrome_version_lineEdit.text() != str(
+                        version_main) or dlg.checkBox_autoreg.checkState() != autoreg_:
                     data = {"chrome_version": int(dlg.chrome_version_lineEdit.text()),
                             "autoreg": dlg.checkBox_autoreg.checkState()}
                     settings_main.update(data)

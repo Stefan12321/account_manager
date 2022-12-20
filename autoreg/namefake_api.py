@@ -47,7 +47,7 @@ class Person:
             res = requests.get(api_url_reserv).json()
             print(res)
             result = {}
-            result.update({"name": res["first_name"],
+            result.update({"name": f'{res["first_name"]} {res["last_name"]}',
                            "last_name": res["last_name"],
                            "email_u": res["email"].split("@")[0],
                            "username": res["username"],
