@@ -14,11 +14,10 @@ executables = [Executable("main.py",
                           base=base)
                ]
 
-# includes = ['chromedriver.exe']
 includes = ['extension', 'icons', './settings.json']
 
 packages = ["os", "threading", "time", "PyQt5", "selenium", "json", "user_agents", "undetected_chromedriver",
-            "html_editor", "autoreg"]
+            "html_editor", "autoreg", "accounts_manager_main"]
 options = {
     'build_exe': {
         'packages': packages,

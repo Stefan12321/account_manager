@@ -1,203 +1,35 @@
 from multiprocessing import freeze_support
 
-import autoreg.autoreg_main
-
 freeze_support()
-
 import os
+from accounts_manager_main.serializer import serialize, deserialize
+
+os.environ["DEBUG_ACCOUNT_MANAGER"] = str(deserialize('./settings.json')["debug"])
+os.environ["ACCOUNT_MANAGER_BASE_DIR"] = os.path.dirname(os.path.realpath(__file__))
+os.environ["ACCOUNT_MANAGER_PATH_TO_SETTINGS"] = f"{os.path.dirname(os.path.realpath(__file__))}/settings.json"
+
 import time
 import threading
-import selenium
-import json
-import undetected_chromedriver as uc
 import shutil
 import zipfile
+import logging
 
-from selenium import webdriver
 from GUI import Ui_MainWindow
 from PyQt5 import QtWidgets, QtGui, QtCore
 from user_agents.main import get_user_agent
-from html_editor.main import create_html
 from list_widget import Ui_Form as Ui_Custom_widget
-from create_account_dialog import Ui_Dialog as Ui_create_account_dialog
-from dialogs.settings_dialog import Ui_Dialog as Ui_settings_dialog
+from dialogs.create_account_dialog import Ui_Dialog as Ui_create_account_dialog
 from dialogs.about_dialog import Ui_Dialog as Ui_about_dialog
 from dialogs.progress_bar import Ui_Dialog as Ui_progress_bar
-from dialogs.settings_main import Ui_Dialog as Ui_main_settings_dialog
 from password_decryptor.passwords_decryptor import do_decrypt
 from zipfile import ZipFile
-from autoreg.autoreg_main import reg_outlook
-from autoreg.namefake_api import Person
 
+from accounts_manager_main.web_browser import WebBrowser
 
-def serialize(path, data: dict):
-    """
+from accounts_manager_main.settings import SettingsDialog, MainSettings
 
-    :param path: path to config.json
-    :param data: dict of settings
-    :return: None
-    """
-    with open(path, 'w') as f:
-        try:
-            json.dump(data, f)
-            print(f"Serialized data: {data}")
-        except Exception as e:
-            print(e)
-
-
-def deserialize(path) -> dict:
-    """
-
-    :param path: path to config.json
-    :return: list of deserialized data from config.json
-    """
-    with open(path, 'r') as f:
-        data = json.load(f)
-
-    return data
-
-
-DEBUG = deserialize('./settings.json')["debug"]
-
-
-class WebBrowser:
-    def __init__(self, path, account_name):
-        print(f"PATH {path}")
-        self.start_undetected_chrome(path, account_name)
-
-    def start_undetected_chrome(self, path, account_name):
-        if os.path.isdir(path):
-            #  get user agent from config.json
-            try:
-                data = deserialize(fr'{path}\config.json')
-                #  get line number from config.json
-                try:
-                    line = data["line_number"]
-                except KeyError as e:
-                    if str(e).replace("'", "") == "line_number":
-                        pass
-                    else:
-                        raise KeyError
-                user_agent_ = data["user-agent"]
-            except FileNotFoundError:
-                user_agent_ = get_user_agent(os=("win"), navigator=("chrome"), device_type=("desktop"))
-                data = {
-                    'user-agent': user_agent_
-                }
-                serialize(fr'{path}\config.json', data)
-                user_agent_ = self.write_to_file(path)
-            except KeyError as e:
-                if str(e).replace("'", "") == "user-agent":
-                    user_agent_ = get_user_agent(os=("win"), navigator=("chrome"), device_type=("desktop"))
-                    data.update({"user-agent": user_agent_})
-
-        else:
-            user_agent_ = get_user_agent(os=("win"), navigator=("chrome"), device_type=("desktop"))
-            data = {
-                'user-agent': user_agent_
-            }
-
-            os.makedirs(path)
-            serialize(fr'{path}\config.json', data)
-        index = f"{path}/init.html"
-        base_dir = os.path.dirname(os.path.realpath(__file__))
-        options = uc.ChromeOptions()
-        try:
-            extensions = ','.join(
-                fr'{base_dir}\extension\{key}' for key in data["extensions"].keys() if data["extensions"][key] is True)
-            options.add_argument(fr'--load-extension={extensions}')
-        except KeyError:
-            pass
-        options.add_argument(f'--user-data-dir={path}')
-        options.add_argument(f"--user-agent={user_agent_}")
-        options.add_argument(f"-enable-features=PasswordImport")
-        settings_main = deserialize('./settings.json')
-        version_main = settings_main["chrome_version"]
-        autoreg_ = settings_main["autoreg"]
-        onload_pages = settings_main["onload_pages"]
-        autoreg.autoreg_main.spreadsheetId = settings_main["spreadsheetId"]
-
-        try:
-            driver = uc.Chrome(options=options, version_main=version_main)
-        except Exception as e:
-            print(e)
-        if os.path.exists(index):
-            driver.get(index)
-        else:
-            create_html(index, account_name)
-            driver.get(index)
-        for page in onload_pages:
-            try:
-                driver.switch_to.new_window('tab')
-                driver.get(page)
-            except Exception as e:
-                print(e)
-        if autoreg_ == 2:
-            person = Person()
-            print(person)
-            reg_outlook(driver, person, int(line))
-        try:
-            while len(driver.window_handles) > 0:
-                time.sleep(1)
-        except selenium.common.exceptions.WebDriverException:
-            driver.quit()
-            print('driver quit')
-
-    def start_standart_chrome(self, path, account_name):
-        if os.path.isdir(path):
-            try:
-                user_agent_ = self.read_from_file(path)
-            except FileNotFoundError:
-                user_agent_ = self.write_to_file(path)
-        else:
-            try:
-                user_agent_ = self.write_to_file(path)
-            except FileNotFoundError:
-                os.makedirs(path)
-                user_agent_ = self.write_to_file(path)
-
-        index = f"{path}/init.html"
-        chromedriver = './chromedriver.exe'
-        options = webdriver.ChromeOptions()
-        options.add_argument(f'--user-data-dir={path}')
-        options.add_extension(f'./extension/FoxyProxy-Standard.crx')
-        # options.add_extension(f'./extension/chrome_extension_fcc-master.crx')
-        options.add_argument(f"user-agent={user_agent_}")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("excludeSwitches", ['enable-automation'])
-        driver = webdriver.Chrome(chromedriver, options=options)
-        if os.path.exists(index):
-            driver.get(index)
-        else:
-            create_html(index, account_name)
-            driver.get(index)
-        driver.switch_to.new_window('tab')
-        driver.get("https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html")
-        driver.switch_to.new_window('tab')
-        driver.get("https://proxyleak.com/")
-        try:
-            while len(driver.window_handles) > 0:
-                time.sleep(1)
-        except selenium.common.exceptions.WebDriverException:
-            driver.quit()
-            print('driver quit')
-
-    @staticmethod
-    def read_from_file(path: str) -> str:
-        data = deserialize(fr'{path}\config.json')
-        user_agent_ = data["user-agent"]
-        print(f"Read user agent: {user_agent_}")
-        return user_agent_
-
-    @staticmethod
-    def write_to_file(path: str) -> str:
-        user_agent_ = get_user_agent(os=("win"), navigator=("chrome"), device_type=("desktop"))
-        data = {
-            'user-agent': user_agent_
-        }
-        serialize(fr'{path}\config.json', data)
-        return user_agent_
-
+DEBUG = (os.getenv("DEBUG_ACCOUNT_MANAGER", default='False') == 'True')
+print(f"DEBUG in main: {DEBUG}, {type(DEBUG)}")
 
 class QListCustomWidgetNew(QtWidgets.QWidget, Ui_Custom_widget):
     def __init__(self, parent=None):
@@ -205,9 +37,9 @@ class QListCustomWidgetNew(QtWidgets.QWidget, Ui_Custom_widget):
         self.setupUi(parent)
 
 
-class QCustomQWidget(QtWidgets.QWidget):
+class QWidgetOneAccountLine(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        super(QCustomQWidget, self).__init__(parent)
+        super(QWidgetOneAccountLine, self).__init__(parent)
         self.name = None
 
         self.textQVBoxLayout = QtWidgets.QHBoxLayout()
@@ -254,13 +86,15 @@ class QCustomQWidget(QtWidgets.QWidget):
         except KeyError:
             data = deserialize(fr'{path}\config.json')
             user_agent = ""
-        try:
+        if "extensions" in data:
             extensions = data["extensions"]
-        except Exception as e:
+        else:
+            logging.warning("There is no extension in config file")
             extensions = {}
-        try:
+        if "line_number" in data:
             line_number = data["line_number"]
-        except:
+        else:
+            logging.warning("There is no line_number in config file")
             line_number = ""
         checked = 2
         dlg = SettingsDialog(user_agent=user_agent, account_name=self.name)
@@ -268,12 +102,9 @@ class QCustomQWidget(QtWidgets.QWidget):
         try:
             passwords = do_decrypt(path)
             dlg.passwords_textBrowser.setText(passwords)
-        except:
-            pass
-        try:
-            dlg.lineEdit_line_number.setText(str(line_number))
-        except:
-            pass
+        except Exception as e:
+            logging.error(f"Can`t decrypt passwords, {e}")
+        dlg.lineEdit_line_number.setText(str(line_number))
         for item in dlg.items:
             if item.extension_name in extensions:
                 if extensions[item.extension_name] is True:
@@ -306,41 +137,10 @@ class QListAccountsWidgetItem(QtWidgets.QListWidgetItem):
         self.thread: threading.Thread or None = None
 
 
-class QlistExtensionsWidgetItem(QtWidgets.QListWidgetItem):
-    def __init__(self, parent=None):
-        super(QlistExtensionsWidgetItem, self).__init__(parent)
-        self.extension_name = None
-
-
 class CreateAccountDialog(Ui_create_account_dialog, QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(CreateAccountDialog, self).__init__(parent)
         self.setupUi(self)
-
-
-class SettingsDialog(Ui_settings_dialog, QtWidgets.QDialog):
-    def __init__(self, parent=None, user_agent="", account_name=""):
-        super(SettingsDialog, self).__init__(parent)
-        self.setupUi(self)
-        if DEBUG:
-            self.CheckGSButton = QtWidgets.QPushButton(self)
-            self.CheckGSButton.setStyleSheet("")
-            self.CheckGSButton.setObjectName("CheckGSButton")
-            self.verticalLayout.addWidget(self.CheckGSButton)
-            self.CheckGSButton.setText("CheckGS")
-            self.CheckGSButton.clicked.connect(autoreg.autoreg_main.test_google_sheet)
-        self.items = []
-        self.name = account_name
-        self.user_agent_line.setText(user_agent)
-        extension_list = os.listdir(fr"{os.path.dirname(os.path.realpath(__file__))}\extension")
-        for extension_name in extension_list:
-            text = extension_name
-            item = QlistExtensionsWidgetItem()
-            item.setText(text)
-            item.extension_name = extension_name
-            item.setCheckState(QtCore.Qt.Unchecked)
-            self.items.append(item)
-            self.listWidgetExtensions.addItem(item)
 
 
 class AboutDlg(Ui_about_dialog, QtWidgets.QDialog):
@@ -348,72 +148,6 @@ class AboutDlg(Ui_about_dialog, QtWidgets.QDialog):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
         self.label_bild_number.setText('0.4')
-
-
-class MainSettings(Ui_main_settings_dialog, QtWidgets.QDialog):
-    def __init__(self):
-        QtWidgets.QDialog.__init__(self)
-        self.setupUi(self)
-        self.pages_list = []
-        self.pages_dict = {}
-        self.add_functions()
-        self.lineEditAddPage.setText("index")
-
-    def add_one_page_onload(self, page_url):
-        try:
-            # print(page_url)
-            horizontalLayout_2 = QtWidgets.QHBoxLayout()
-            horizontalLayout_2.setObjectName("horizontalLayout_2")
-            lineEditAddPage = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(lineEditAddPage.sizePolicy().hasHeightForWidth())
-            lineEditAddPage.setSizePolicy(sizePolicy)
-            lineEditAddPage.setObjectName("lineEditAddPage")
-            horizontalLayout_2.addWidget(lineEditAddPage)
-            pushButton_remove_page = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-            pushButton_remove_page.setEnabled(True)
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(pushButton_remove_page.sizePolicy().hasHeightForWidth())
-            pushButton_remove_page.setSizePolicy(sizePolicy)
-            pushButton_remove_page.setMaximumSize(QtCore.QSize(30, 30))
-            pushButton_remove_page.setObjectName("pushButton_remove_page")
-            pushButton_remove_page.setText("-")
-            pushButton_remove_page.clicked.connect(lambda: self.deleteItemsOfLayout(horizontalLayout_2))
-            horizontalLayout_2.addWidget(pushButton_remove_page)
-            self.verticalLayout_2.addLayout(horizontalLayout_2)
-            if page_url:
-                lineEditAddPage.setText(page_url)
-
-            self.pages_list.append(lineEditAddPage)
-            self.pages_dict.update({horizontalLayout_2: lineEditAddPage})
-            # print(horizontalLayout_2)
-            # print(self.pages_dict)
-
-        except Exception as e:
-            print(e)
-
-    def deleteItemsOfLayout(self, layout):
-        if layout is not None:
-            while layout.count():
-                item = layout.takeAt(0)
-
-                widget = item.widget()
-                if widget is not None:
-                    widget.setParent(None)
-                else:
-                    self.deleteItemsOfLayout(item.layout())
-            try:
-                self.pages_dict.pop(layout)
-                # print(self.pages_dict)
-            except Exception as e:
-                print(e)
-
-    def add_functions(self):
-        self.pushButton_add_page.clicked.connect(self.add_one_page_onload)
 
 
 class ProgressBarDialog(Ui_progress_bar, QtWidgets.QDialog):
@@ -432,16 +166,6 @@ class ProgressBarDialog(Ui_progress_bar, QtWidgets.QDialog):
     @QtCore.pyqtSlot()
     def exit(self):
         self.close()
-
-
-class ProgressBarDialogThread(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
-
-    def run(self):
-        self.dlg = ProgressBarDialog()
-        self.dlg.show()
-        self.dlg.exec()
 
 
 class QListCustomWidget(QtWidgets.QListWidgetItem):
@@ -492,7 +216,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 widget.checkBox.setCheckState(QtCore.Qt.Unchecked)
 
     def create_list_item(self, name):
-        myQCustomQWidget = QCustomQWidget()
+        myQCustomQWidget = QWidgetOneAccountLine()
         myQCustomQWidget.setTextUp(name)
         myQCustomQWidget.name = name
         myQListWidgetItem = QListAccountsWidgetItem(self.listWidget)
@@ -638,11 +362,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             shutil.rmtree(path=fr'{self.profiles_path}\{profile.name}')
             self.listWidget.removeItemWidget(profile)
             self.progress_signal.emit(int(counter / (length / 100)))
-            # print(type(profile.name))
             self.progress_filename_signal.emit(profile.name)
             counter += 1
 
-        # time.sleep(2)
         self.progress_exit_signal.emit()
 
     def update_item_list(self):
@@ -680,7 +402,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         dlg.show()
         result = dlg.exec()
         if result:
-            # print(dlg.checkBox_autoreg.checkState())
             print(f"Pages dict: {dlg.pages_dict}")
 
             for layout in dlg.pages_dict.keys():
@@ -694,7 +415,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     settings_main.update(data)
 
             except Exception as e:
-                print(e)
+                logging.error(e)
             serialize('./settings.json', settings_main)
 
     def create_profile(self):
@@ -711,13 +432,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 'user-agent': user_agent_
             }
             serialize(fr'{path}\config.json', data)
-            # passwords = do_decrypt(path)
 
     def item_click(self, item: QListAccountsWidgetItem):
         account_name = self.listWidget.itemWidget(item).name
-        if item.status is True:
-            pass
-        else:
+        if item.status is not True:
             t = threading.Thread(target=self.run_browser, args=(account_name,))
             item.thread = t
             t.start()
